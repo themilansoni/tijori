@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tijori — Investment Tracker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🪙 Tijori</div>
+  <div class="sync-controls">
+    <span id="syncStatus" class="sync-status">Not synced</span>
+    <button id="btnSettings" class="btn-ghost">⚙ Settings</button>
+    <button id="btnSync" class="btn-primary">⇄ Sync with GitHub</button>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="summary" id="summary"></section>
+
+  <section class="addbar">
+    <select id="catSelect">
+      <option value="PF">PF</option>
+      <option value="PPF">PPF</option>
+      <option value="LIC">LIC</option>
+      <option value="FD">FD</option>
+      <option value="RD">RD</option>
+      <option value="Banks">Banks</option>
+      <option value="Shares">Share Market</option>
+    </select>
+    <input type="text" id="inputName" placeholder="Name / Account / Policy / Stock" />
+    <input type="number" id="inputAmount" placeholder="Current Value (₹)" />
+    <input type="number" id="inputInvested" placeholder="Invested Amount (₹)" />
+    <input type="text" id="inputNote" placeholder="Notes (maturity date, folio no., etc.)" />
+    <button id="btnAdd" class="btn-primary">+ Add Entry</button>
+  </section>
+
+  <section id="tablesWrap"></section>
+
+</main>
+
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-card">
+    <h3>GitHub Sync Settings</h3>
+    <p class="hint">Your data is stored as <code>data.json</code> in the <b>themilansoni/tijori</b> repo. A Personal Access Token (fine-grained, "Contents: Read/Write" on this repo) is needed to sync. The token is kept only in this browser's localStorage and never sent anywhere except api.github.com.</p>
+    <label>GitHub Owner/Repo</label>
+    <input type="text" id="cfgRepo" placeholder="themilansoni/tijori" />
+    <label>Branch</label>
+    <input type="text" id="cfgBranch" placeholder="main" />
+    <label>Personal Access Token</label>
+    <input type="password" id="cfgToken" placeholder="ghp_..." />
+    <div class="modal-actions">
+      <button id="btnCancelSettings" class="btn-ghost">Cancel</button>
+      <button id="btnSaveSettings" class="btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
