@@ -175,3 +175,38 @@ tr:last-child td { border-bottom: none; }
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+.hidden { display: none !important; }
+
+.login-screen {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  z-index: 200;
+}
+
+.login-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  width: 340px;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.login-card .brand { margin-bottom: 4px; }
+.login-card h3 { margin-top: 0; margin-bottom: 20px; color: var(--muted); font-weight: 500; }
+.login-card label { display: block; margin-top: 14px; font-size: 13px; color: var(--muted); text-align: left; }
+.login-card input {
+  width: 100%;
+  margin-top: 4px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 10px;
+  color: var(--text);
+  font-size: 14px;
+}
+.login-card .btn-primary { width: 100%; margin-top: 20px; padding: 10px; }
+.login-error { color: var(--danger); font-size: 13px; margin-top: 12px; text-align: left; }
