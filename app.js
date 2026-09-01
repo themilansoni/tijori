@@ -2,6 +2,9 @@ const CATS = ["PF", "PPF", "LIC", "FD", "RD", "Banks", "Shares"];
 
 const LS_DATA_KEY = "tijori_data";
 const LS_CFG_KEY = "tijori_cfg";
+const LS_AUTH_KEY = "tijori_auth";
+const AUTH_USER = "milansoni";
+const AUTH_PASS = "123";
 
 let state = loadLocal();
 let cfg = JSON.parse(localStorage.getItem(LS_CFG_KEY) || "{}");
@@ -301,4 +304,49 @@ document.getElementById("btnSync").addEventListener("click", async () => {
   }
 });
 
-render();
+// ---------- Login gate ----------
+function isLoggedIn() {
+  return localStorage.getItem(LS_AUTH_KEY) === "1";
+}
+
+function showApp() {
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("appRoot").classList.remove("hidden");
+  render();
+}
+
+function showLogin() {
+  document.getElementById("appRoot").classList.add("hidden");
+  document.getElementById("loginScreen").classList.remove("hidden");
+  document.getElementById("loginPassword").value = "";
+}
+
+function attemptLogin() {
+  const u = document.getElementById("loginUsername").value.trim();
+  const p = document.getElementById("loginPassword").value;
+  if (u === AUTH_USER && p === AUTH_PASS) {
+    localStorage.setItem(LS_AUTH_KEY, "1");
+    document.getElementById("loginError").classList.add("hidden");
+    showApp();
+  } else {
+    document.getElementById("loginError").classList.remove("hidden");
+  }
+}
+
+document.getElementById("btnLogin").addEventListener("click", attemptLogin);
+document.getElementById("loginPassword").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") attemptLogin();
+});
+document.getElementById("loginUsername").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") attemptLogin();
+});
+document.getElementById("btnLogout").addEventListener("click", () => {
+  localStorage.removeItem(LS_AUTH_KEY);
+  showLogin();
+});
+
+if (isLoggedIn()) {
+  showApp();
+} else {
+  showLogin();
+}
