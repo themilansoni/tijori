@@ -7,12 +7,29 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="brand">🪙 Tijori</div>
+    <h3>Sign in</h3>
+    <label>Username</label>
+    <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" />
+    <label>Password</label>
+    <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" />
+    <div id="loginError" class="login-error hidden">Incorrect username or password.</div>
+    <button id="btnLogin" class="btn-primary">Sign in</button>
+  </div>
+</div>
+
+<div id="appRoot" class="hidden">
+
 <header class="topbar">
   <div class="brand">🪙 Tijori</div>
   <div class="sync-controls">
     <span id="syncStatus" class="sync-status">Not synced</span>
     <button id="btnSettings" class="btn-ghost">⚙ Settings</button>
     <button id="btnSync" class="btn-primary">⇄ Sync with GitHub</button>
+    <button id="btnLogout" class="btn-ghost">⎋ Logout</button>
   </div>
 </header>
 
@@ -56,6 +73,8 @@
       <button id="btnSaveSettings" class="btn-primary">Save</button>
     </div>
   </div>
+</div>
+
 </div>
 
 <script src="app.js"></script>
