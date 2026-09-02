@@ -1,0 +1,18 @@
+export function TijoriMark({ size = 24, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect width="32" height="32" rx="9" fill="#0b0c0e" />
+      <rect x="5" y="5" width="22" height="22" rx="6" fill="none" stroke="#2bffb0" strokeWidth="2.4" />
+      <circle cx="16" cy="16" r="5.4" fill="#2bffb0" />
+      <rect x="15.1" y="9.6" width="1.8" height="4.4" rx="0.9" fill="#0b0c0e" />
+      <rect x="26.1" y="13.6" width="3.3" height="4.8" rx="1.3" fill="#2bffb0" />
+    </svg>
+  );
+}

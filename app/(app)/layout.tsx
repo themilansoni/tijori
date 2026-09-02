@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
+import { TijoriMark } from "@/components/ui/tijori-mark";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -25,12 +26,12 @@ export default async function AppLayout({
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_2px_rgba(43,255,176,0.7)]" />
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <TijoriMark size={24} className="rounded-[7px]" />
             <span className="font-mono text-[13px] font-medium tracking-[3px] text-muted">
               TIJORI
             </span>
-          </div>
+          </Link>
 
           <nav className="flex items-center gap-1">
             {NAV_ITEMS.map((item) => (

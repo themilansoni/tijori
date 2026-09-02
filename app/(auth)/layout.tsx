@@ -1,3 +1,5 @@
+import { TijoriMark } from "@/components/ui/tijori-mark";
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-6 py-14">
@@ -25,7 +27,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       <div className="relative z-10 flex flex-col items-center gap-6">
         <div className="flex items-center gap-2.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_2px_rgba(43,255,176,0.7)]" />
+          <TijoriMark size={26} className="rounded-[8px] shadow-[0_0_14px_rgba(43,255,176,0.35)]" />
           <span className="font-mono text-[13px] font-medium tracking-[3px] text-muted">
             TIJORI<span className="text-accent animate-pulse">_</span>
           </span>

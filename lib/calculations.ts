@@ -180,6 +180,47 @@ export function spendingByMonth(
   });
 }
 
+export type IncomeExpensePoint = { label: string; income: number; expense: number };
+
+/** Income vs. expense, one point per day in [start, end] — for the monthly/weekly dashboard trend view. */
+export function incomeExpenseByDay(
+  transactions: Transaction[],
+  start: string,
+  end: string
+): IncomeExpensePoint[] {
+  const days = eachDayOfInterval({ start: parseISO(start), end: parseISO(end) });
+  const income = new Map<string, number>();
+  const expense = new Map<string, number>();
+  for (const t of transactions) {
+    const bucket = t.type === "income" ? income : expense;
+    bucket.set(t.transaction_date, (bucket.get(t.transaction_date) ?? 0) + Number(t.amount));
+  }
+  return days.map((d) => {
+    const iso = toISO(d);
+    return { label: format(d, "d MMM"), income: income.get(iso) ?? 0, expense: expense.get(iso) ?? 0 };
+  });
+}
+
+/** Income vs. expense, one point per month in [start, end] — for the yearly dashboard trend view. */
+export function incomeExpenseByMonth(
+  transactions: Transaction[],
+  start: string,
+  end: string
+): IncomeExpensePoint[] {
+  const months = eachMonthOfInterval({ start: parseISO(start), end: parseISO(end) });
+  const income = new Map<string, number>();
+  const expense = new Map<string, number>();
+  for (const t of transactions) {
+    const key = t.transaction_date.slice(0, 7);
+    const bucket = t.type === "income" ? income : expense;
+    bucket.set(key, (bucket.get(key) ?? 0) + Number(t.amount));
+  }
+  return months.map((m) => {
+    const key = format(m, "yyyy-MM");
+    return { label: format(m, "MMM"), income: income.get(key) ?? 0, expense: expense.get(key) ?? 0 };
+  });
+}
+
 /** Current balance = opening balance + all income into it - all expenses out of it. */
 export function accountBalance(account: Account, allTransactions: Transaction[]): number {
   const forAccount = allTransactions.filter((t) => t.account_id === account.id);
