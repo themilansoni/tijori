@@ -9,15 +9,50 @@
 <body>
 
 <div id="loginScreen" class="login-screen">
-  <div class="login-card">
-    <div class="brand">🪙 Tijori</div>
-    <h3>Sign in</h3>
+  <div class="login-bg" aria-hidden="true">
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="glow glow-3"></div>
+  </div>
+
+  <div class="login-card" id="loginCard">
+    <div class="vault-icon">
+      <svg viewBox="0 0 100 100" class="vault-svg" aria-hidden="true">
+        <rect x="6" y="6" width="88" height="88" rx="16" fill="#3d5940" stroke="#26382a" stroke-width="3"/>
+        <rect x="17" y="17" width="66" height="66" rx="10" fill="#4f7350" stroke="#26382a" stroke-width="2"/>
+        <circle cx="14" cy="14" r="3" fill="#26382a"/>
+        <circle cx="86" cy="14" r="3" fill="#26382a"/>
+        <circle cx="14" cy="86" r="3" fill="#26382a"/>
+        <circle cx="86" cy="86" r="3" fill="#26382a"/>
+        <rect x="82" y="42" width="12" height="16" rx="3" fill="#26382a"/>
+        <g class="vault-dial" style="transform-origin: 50px 50px;">
+          <circle cx="50" cy="50" r="21" fill="#d9b97a" stroke="#8a6f3f" stroke-width="2"/>
+          <circle cx="50" cy="50" r="21" fill="none" stroke="#f3dfae" stroke-width="1" opacity="0.6"/>
+          <g stroke="#8a6f3f" stroke-width="1.4">
+            <line x1="50" y1="31" x2="50" y2="36"/>
+            <line x1="50" y1="64" x2="50" y2="69"/>
+            <line x1="31" y1="50" x2="36" y2="50"/>
+            <line x1="64" y1="50" x2="69" y2="50"/>
+            <line x1="37" y1="37" x2="40.5" y2="40.5"/>
+            <line x1="63" y1="63" x2="59.5" y2="59.5"/>
+            <line x1="63" y1="37" x2="59.5" y2="40.5"/>
+            <line x1="37" y1="63" x2="40.5" y2="59.5"/>
+          </g>
+          <circle cx="50" cy="50" r="5" fill="#26382a"/>
+          <line x1="50" y1="50" x2="50" y2="36" stroke="#26382a" stroke-width="2" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="brand-title">Tijori</div>
+    <div class="tagline">Your financial vault — secured</div>
+
     <label>Username</label>
     <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" />
     <label>Password</label>
     <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" />
     <div id="loginError" class="login-error hidden">Incorrect username or password.</div>
-    <button id="btnLogin" class="btn-primary">Sign in</button>
+    <button id="btnLogin" class="btn-primary btn-unlock"><span class="lock-emoji">🔓</span> Unlock</button>
   </div>
 </div>
 
