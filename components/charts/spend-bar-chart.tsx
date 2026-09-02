@@ -33,7 +33,7 @@ export function SpendBarChart({
               fontSize: 12,
             }}
             labelStyle={{ color: "#f2f3f5" }}
-            formatter={(value: number) => [fmtCurrency(value), "Spent"]}
+            formatter={(value) => [fmtCurrency(Number(value)), "Spent"]}
           />
           <Bar dataKey="amount" fill="#2bffb0" radius={[4, 4, 0, 0]} maxBarSize={36} />
         </BarChart>

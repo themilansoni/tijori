@@ -22,7 +22,9 @@ export function ConfirmButton({
       className={className}
       onClick={() => {
         if (window.confirm(confirmMessage)) {
-          startTransition(() => action());
+          startTransition(async () => {
+            await action();
+          });
         }
       }}
     >
