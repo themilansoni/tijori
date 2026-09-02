@@ -306,7 +306,7 @@ document.getElementById("btnSync").addEventListener("click", async () => {
 
 // ---------- Login gate ----------
 function isLoggedIn() {
-  return localStorage.getItem(LS_AUTH_KEY) === "1";
+  return localStorage.getItem(LS_AUTH_KEY) === "1" || sessionStorage.getItem(LS_AUTH_KEY) === "1";
 }
 
 function showApp() {
@@ -325,8 +325,13 @@ function attemptLogin() {
   const u = document.getElementById("loginUsername").value.trim();
   const p = document.getElementById("loginPassword").value;
   const card = document.getElementById("loginCard");
+  const remember = document.getElementById("rememberMe").checked;
   if (u === AUTH_USER && p === AUTH_PASS) {
-    localStorage.setItem(LS_AUTH_KEY, "1");
+    if (remember) {
+      localStorage.setItem(LS_AUTH_KEY, "1");
+    } else {
+      sessionStorage.setItem(LS_AUTH_KEY, "1");
+    }
     document.getElementById("loginError").classList.add("hidden");
     showApp();
   } else {
@@ -346,11 +351,21 @@ document.getElementById("loginUsername").addEventListener("keydown", (e) => {
 });
 document.getElementById("btnLogout").addEventListener("click", () => {
   localStorage.removeItem(LS_AUTH_KEY);
+  sessionStorage.removeItem(LS_AUTH_KEY);
   showLogin();
 });
 
 document.getElementById("forgotLink").addEventListener("click", () => {
   document.getElementById("forgotNote").classList.toggle("hidden");
+});
+
+document.getElementById("togglePw").addEventListener("click", () => {
+  const pw = document.getElementById("loginPassword");
+  const btn = document.getElementById("togglePw");
+  const show = pw.type === "password";
+  pw.type = show ? "text" : "password";
+  btn.textContent = show ? "🙈" : "👁";
+  btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
 });
 
 // ---------- Background orb parallax ----------
