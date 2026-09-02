@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "tijori",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "serve", "."],
-      "autoPort": true
+      "name": "tijori-next",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
     }
   ]
 }
