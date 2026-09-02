@@ -1,16 +1,16 @@
 import { TransactionList } from "@/components/transactions/transaction-list";
 import type { Account, Category, Transaction } from "@/lib/types";
 
-export function ExpenseList({
+export function IncomeList({
   transactions,
   categories,
-  accounts = [],
+  accounts,
 }: {
   transactions: Transaction[];
   categories: Category[];
-  accounts?: Account[];
+  accounts: Account[];
 }) {
   return (
-    <TransactionList type="expense" transactions={transactions} categories={categories} accounts={accounts} />
+    <TransactionList type="income" transactions={transactions} categories={categories} accounts={accounts} />
   );
 }

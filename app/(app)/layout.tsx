@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: "/expenses", label: "Expenses" },
   { href: "/income", label: "Income" },
   { href: "/budgets", label: "Budgets" },
+  { href: "/accounts", label: "Accounts" },
   { href: "/settings", label: "Settings" },
 ];
 

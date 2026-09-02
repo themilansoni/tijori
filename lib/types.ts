@@ -14,6 +14,7 @@ export type Transaction = {
   user_id: string;
   type: "expense" | "income";
   category_id: string;
+  account_id: string | null;
   amount: number;
   transaction_date: string; // YYYY-MM-DD
   description: string | null;
@@ -22,6 +23,37 @@ export type Transaction = {
   created_at: string;
   updated_at: string;
 };
+
+export type AccountType =
+  | "cash"
+  | "bank"
+  | "credit_card"
+  | "debit_card"
+  | "wallet"
+  | "investment"
+  | "other";
+
+export type Account = {
+  id: string;
+  user_id: string;
+  name: string;
+  type: AccountType;
+  opening_balance: number;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
+  { value: "cash", label: "Cash" },
+  { value: "bank", label: "Bank" },
+  { value: "credit_card", label: "Credit Card" },
+  { value: "debit_card", label: "Debit Card" },
+  { value: "wallet", label: "Wallet" },
+  { value: "investment", label: "Investment" },
+  { value: "other", label: "Other" },
+];
 
 export type BudgetPeriod = "daily" | "weekly" | "monthly" | "yearly";
 

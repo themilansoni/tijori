@@ -4,21 +4,22 @@ import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
 import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-selector";
 import { SpendBarChart } from "@/components/charts/spend-bar-chart";
-import { ExpenseForm } from "@/components/forms/expense-form";
-import { FiltersBar, type SortKey } from "./filters-bar";
-import { ExpenseList } from "./expense-list";
+import { TransactionForm } from "@/components/forms/transaction-form";
+import { FiltersBar, type SortKey } from "@/components/transactions/filters-bar";
+import { IncomeList } from "./income-list";
 import {
   getPeriodRange,
   sumAmount,
   dailyAverage,
   categorySpending,
+  amountByAccount,
   spendingByDay,
   spendingByMonth,
   fmtCurrency,
 } from "@/lib/calculations";
 import type { Account, Category, PeriodKey, Transaction } from "@/lib/types";
 
-export default async function ExpensesPage({
+export default async function IncomePage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
@@ -35,11 +36,11 @@ export default async function ExpensesPage({
   const supabase = await createClient();
 
   const [{ data: categoriesRaw }, { data: periodTxRaw }, { data: accountsRaw }] = await Promise.all([
-    supabase.from("categories").select("*").eq("type", "expense").order("name"),
+    supabase.from("categories").select("*").eq("type", "income").order("name"),
     supabase
       .from("transactions")
       .select("*")
-      .eq("type", "expense")
+      .eq("type", "income")
       .gte("transaction_date", start)
       .lte("transaction_date", end),
     supabase.from("accounts").select("*").eq("is_active", true).order("name"),
@@ -51,9 +52,10 @@ export default async function ExpensesPage({
   const accounts = (accountsRaw ?? []) as Account[];
 
   // ---- Summary stats ----
-  const totalExpenses = sumAmount(periodTransactions);
+  const totalIncome = sumAmount(periodTransactions);
   const avgDaily = dailyAverage(periodTransactions, start, end);
   const catBreakdown = categorySpending(periodTransactions, categories);
+  const accountBreakdown = amountByAccount(periodTransactions, accounts);
 
   // ---- Chart data ----
   const chart =
@@ -63,7 +65,7 @@ export default async function ExpensesPage({
       ? []
       : spendingByDay(periodTransactions, start, end).map((d) => ({ label: d.label, amount: d.amount }));
 
-  // ---- Filters/sort/search (applied to the period's transactions for the list) ----
+  // ---- Filters/sort/search ----
   const categoryFilter = sp.category;
   const sort = (sp.sort as SortKey) || "newest";
   const q = sp.q?.trim().toLowerCase();
@@ -72,8 +74,7 @@ export default async function ExpensesPage({
   if (categoryFilter) visible = visible.filter((t) => t.category_id === categoryFilter);
   if (q) {
     visible = visible.filter(
-      (t) =>
-        t.description?.toLowerCase().includes(q) || t.note?.toLowerCase().includes(q)
+      (t) => t.description?.toLowerCase().includes(q) || t.note?.toLowerCase().includes(q)
     );
   }
   visible = [...visible].sort((a, b) => {
@@ -104,9 +105,9 @@ export default async function ExpensesPage({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Expenses</h1>
-        <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
-          <ExpenseForm categories={activeCategories} accounts={accounts} keepOpenOnAdd />
+        <h1 className="text-2xl font-bold">Income</h1>
+        <Modal trigger={<Button>+ Add Income</Button>} title="Add income">
+          <TransactionForm type="income" categories={activeCategories} accounts={accounts} keepOpenOnAdd />
         </Modal>
       </div>
 
@@ -117,16 +118,25 @@ export default async function ExpensesPage({
 
       {activeCategories.length === 0 && (
         <div className="mt-4 rounded-xl border border-dashed border-border p-4 text-sm text-muted">
-          No expense categories yet —{" "}
+          No income categories yet —{" "}
           <a href="/settings" className="text-accent">
             create one in Settings
           </a>{" "}
-          before adding an expense.
+          before adding income.
+        </div>
+      )}
+      {accounts.length === 0 && (
+        <div className="mt-4 rounded-xl border border-dashed border-border p-4 text-sm text-muted">
+          No accounts yet —{" "}
+          <a href="/accounts" className="text-accent">
+            add one
+          </a>{" "}
+          so income can record where it landed.
         </div>
       )}
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={`Total (${periodLabel})`} value={fmtCurrency(totalExpenses)} />
+        <StatCard label={`Total (${periodLabel})`} value={fmtCurrency(totalIncome)} tone="accent" />
         <StatCard label="Daily Average" value={fmtCurrency(avgDaily)} />
         <StatCard label="Transactions" value={String(periodTransactions.length)} />
         <StatCard
@@ -138,34 +148,50 @@ export default async function ExpensesPage({
 
       {chart.length > 0 && (
         <div className="mt-6 rounded-xl border border-border bg-surface p-4">
-          <div className="mb-2 text-sm font-semibold text-muted">Spending trend</div>
+          <div className="mb-2 text-sm font-semibold text-muted">Income trend</div>
           <SpendBarChart data={chart} />
         </div>
       )}
 
-      {catBreakdown.length > 0 && (
-        <div className="mt-6 rounded-xl border border-border bg-surface p-4">
-          <div className="mb-3 text-sm font-semibold text-muted">Category breakdown — {periodLabel}</div>
-          <div className="space-y-2.5">
-            {catBreakdown.map((c) => (
-              <div key={c.category.id}>
-                <div className="flex items-center justify-between text-sm">
-                  <span>{c.category.name}</span>
-                  <span className="text-muted">
-                    {fmtCurrency(c.amount)} · {c.percent.toFixed(0)}%
-                  </span>
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {catBreakdown.length > 0 && (
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <div className="mb-3 text-sm font-semibold text-muted">Category breakdown — {periodLabel}</div>
+            <div className="space-y-2.5">
+              {catBreakdown.map((c) => (
+                <div key={c.category.id}>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{c.category.name}</span>
+                    <span className="text-muted">
+                      {fmtCurrency(c.amount)} · {c.percent.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-white/5">
+                    <div
+                      className="h-full rounded-full bg-accent"
+                      style={{ width: `${Math.min(c.percent, 100)}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-white/5">
-                  <div
-                    className="h-full rounded-full bg-accent"
-                    style={{ width: `${Math.min(c.percent, 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {accountBreakdown.length > 0 && (
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <div className="mb-3 text-sm font-semibold text-muted">Income by account — {periodLabel}</div>
+            <div className="space-y-2.5">
+              {accountBreakdown.map((a) => (
+                <div key={a.account.id} className="flex items-center justify-between text-sm">
+                  <span>{a.account.name}</span>
+                  <span className="font-semibold text-accent">{fmtCurrency(a.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Transactions</h2>
@@ -180,15 +206,20 @@ export default async function ExpensesPage({
       <div className="mt-3">
         {periodTransactions.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-10 text-center">
-            <p className="text-muted">No expenses yet for {periodLabel.toLowerCase()}.</p>
+            <p className="text-muted">No income yet for {periodLabel.toLowerCase()}.</p>
             <div className="mt-3">
-              <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
-                <ExpenseForm categories={activeCategories} accounts={accounts} keepOpenOnAdd />
+              <Modal trigger={<Button>+ Add Income</Button>} title="Add income">
+                <TransactionForm
+                  type="income"
+                  categories={activeCategories}
+                  accounts={accounts}
+                  keepOpenOnAdd
+                />
               </Modal>
             </div>
           </div>
         ) : (
-          <ExpenseList transactions={visible} categories={categories} accounts={accounts} />
+          <IncomeList transactions={visible} categories={categories} accounts={accounts} />
         )}
       </div>
     </div>

@@ -15,7 +15,7 @@ import {
   addMonths,
   addYears,
 } from "date-fns";
-import type { Budget, BudgetPeriod, Category, PeriodKey, Transaction } from "./types";
+import type { Account, Budget, BudgetPeriod, Category, PeriodKey, Transaction } from "./types";
 
 const ISO = "yyyy-MM-dd";
 const toISO = (d: Date) => format(d, ISO);
@@ -178,6 +178,30 @@ export function spendingByMonth(
     const key = format(m, "yyyy-MM");
     return { month: key, label: format(m, "MMM"), amount: totals.get(key) ?? 0 };
   });
+}
+
+/** Current balance = opening balance + all income into it - all expenses out of it. */
+export function accountBalance(account: Account, allTransactions: Transaction[]): number {
+  const forAccount = allTransactions.filter((t) => t.account_id === account.id);
+  const income = sumAmount(forAccount.filter((t) => t.type === "income"));
+  const expense = sumAmount(forAccount.filter((t) => t.type === "expense"));
+  return Number(account.opening_balance) + income - expense;
+}
+
+export type AccountAmount = { account: Account; amount: number };
+
+/** Sum of `transactions` grouped by account (e.g. "income by account" for a period). */
+export function amountByAccount(transactions: Transaction[], accounts: Account[]): AccountAmount[] {
+  const byId = new Map(accounts.map((a) => [a.id, a]));
+  const totals = new Map<string, number>();
+  for (const t of transactions) {
+    if (!t.account_id) continue;
+    totals.set(t.account_id, (totals.get(t.account_id) ?? 0) + Number(t.amount));
+  }
+  return Array.from(totals.entries())
+    .map(([accountId, amount]) => ({ account: byId.get(accountId)!, amount }))
+    .filter((a) => a.account)
+    .sort((a, b) => b.amount - a.amount);
 }
 
 export function fmtCurrency(n: number): string {
