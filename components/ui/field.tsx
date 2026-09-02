@@ -27,7 +27,7 @@ export function SelectField({
       </span>
       <select
         {...props}
-        className="mt-2 w-full rounded-[9px] border border-border bg-white/[0.03] px-[13px] py-3 text-[14px] text-foreground transition focus:outline-none focus:bg-white/[0.045] focus:border-accent focus:shadow-[0_0_0_3px_rgba(43,255,176,0.14)]"
+        className="mt-2 w-full cursor-pointer rounded-[9px] border border-border bg-surface-2 px-[13px] py-3 text-[14px] text-foreground transition hover:border-white/25 focus:outline-none focus:bg-white/[0.045] focus:border-accent focus:shadow-[0_0_0_3px_rgba(43,255,176,0.14)]"
       >
         {children}
       </select>

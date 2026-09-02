@@ -30,3 +30,19 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/*
+ * Native <select>/<option> contrast fix.
+ * Styling a <select>'s background/color does NOT propagate into the browser's
+ * native dropdown popup — without this, options render as white-on-white in
+ * Chrome/Edge on Windows. color-scheme tells the browser to draw all native
+ * form-control chrome (popup, arrow, scrollbar) in dark mode; the explicit
+ * option colors are the belt-and-suspenders fallback for engines that ignore it.
+ */
+select {
+  color-scheme: dark;
+}
+option {
+  background-color: var(--surface-2);
+  color: var(--foreground);
+}

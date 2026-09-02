@@ -2,10 +2,34 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { Category } from "@/lib/types";
 
 export type ActionResult = { error?: string } | { ok: true };
+export type CreateCategoryResult = { error: string } | { ok: true; category: Category };
 
-export async function createCategory(formData: FormData): Promise<ActionResult> {
+const DUPLICATE_NAME_ERROR = "Category already exists. Please choose another name.";
+
+async function isDuplicateName(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  type: string,
+  name: string,
+  excludeId?: string
+) {
+  let query = supabase
+    .from("categories")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("type", type)
+    .ilike("name", name);
+
+  if (excludeId) query = query.neq("id", excludeId);
+
+  const { count } = await query;
+  return Boolean(count && count > 0);
+}
+
+export async function createCategory(formData: FormData): Promise<CreateCategoryResult> {
   const name = String(formData.get("name") ?? "").trim();
   const type = String(formData.get("type") ?? "");
 
@@ -18,16 +42,26 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
-  const { error } = await supabase
-    .from("categories")
-    .insert({ user_id: user.id, name, type });
+  if (await isDuplicateName(supabase, user.id, type, name)) {
+    return { error: DUPLICATE_NAME_ERROR };
+  }
 
-  if (error) return { error: error.message };
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({ user_id: user.id, name, type })
+    .select()
+    .single();
+
+  if (error) {
+    // DB unique index as a safety net in case of a race with the pre-check above.
+    if (error.code === "23505") return { error: DUPLICATE_NAME_ERROR };
+    return { error: error.message };
+  }
 
   revalidatePath("/settings");
   revalidatePath("/expenses");
   revalidatePath("/budgets");
-  return { ok: true };
+  return { ok: true, category: data as Category };
 }
 
 export async function updateCategory(formData: FormData): Promise<ActionResult> {
@@ -38,9 +72,28 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
   if (!name) return { error: "Category name is required." };
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { data: existing } = await supabase
+    .from("categories")
+    .select("type")
+    .eq("id", id)
+    .single();
+  if (!existing) return { error: "Category not found." };
+
+  if (await isDuplicateName(supabase, user.id, existing.type, name, id)) {
+    return { error: DUPLICATE_NAME_ERROR };
+  }
+
   const { error } = await supabase.from("categories").update({ name }).eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.code === "23505") return { error: DUPLICATE_NAME_ERROR };
+    return { error: error.message };
+  }
 
   revalidatePath("/settings");
   revalidatePath("/expenses");

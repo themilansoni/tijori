@@ -34,7 +34,7 @@ export function FiltersBar({
       <select
         value={currentCategory ?? ""}
         onChange={(e) => setParam("category", e.target.value)}
-        className="rounded-md border border-border bg-white/[0.03] px-2.5 py-1.5 text-sm text-foreground"
+        className="cursor-pointer rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-sm text-foreground transition hover:border-white/25 focus:outline-none focus:border-accent"
       >
         <option value="">All categories</option>
         {categories.map((c) => (
@@ -47,7 +47,7 @@ export function FiltersBar({
       <select
         value={currentSort}
         onChange={(e) => setParam("sort", e.target.value)}
-        className="rounded-md border border-border bg-white/[0.03] px-2.5 py-1.5 text-sm text-foreground"
+        className="cursor-pointer rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-sm text-foreground transition hover:border-white/25 focus:outline-none focus:border-accent"
       >
         <option value="newest">Newest first</option>
         <option value="oldest">Oldest first</option>
