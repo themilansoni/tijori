@@ -9,25 +9,19 @@
 <body>
 
 <div id="loginScreen" class="login-screen">
-  <div class="login-bg" aria-hidden="true">
-    <div class="glow glow-1"></div>
-    <div class="glow glow-2"></div>
-    <div class="glow glow-3"></div>
+  <div class="live-bg" id="liveBg" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+    <div class="orb orb-5"></div>
+    <div class="grid-overlay"></div>
   </div>
 
-  <div class="login-card" id="loginCard">
+  <div class="login-content">
 
     <div class="login-left">
-      <div class="floaty-icons" aria-hidden="true">
-        <span class="fi fi1">💰</span>
-        <span class="fi fi2">📈</span>
-        <span class="fi fi3">🏦</span>
-        <span class="fi fi4">🪙</span>
-        <span class="fi fi5">💎</span>
-        <span class="fi fi6">📊</span>
-      </div>
-
-      <div class="vault-icon">
+      <div class="logo-badge">
         <svg viewBox="0 0 100 100" class="vault-svg" aria-hidden="true">
           <rect x="6" y="6" width="88" height="88" rx="16" fill="#3d5940" stroke="#26382a" stroke-width="3"/>
           <rect x="17" y="17" width="66" height="66" rx="10" fill="#4f7350" stroke="#26382a" stroke-width="2"/>
@@ -55,24 +49,37 @@
         </svg>
       </div>
 
-      <div class="brand-title">Tijori</div>
-      <div class="tagline">Your financial vault — secured</div>
+      <div class="brand-title-light">Tijori</div>
+      <div class="tagline-light">Your Financial Vault</div>
 
-      <svg class="sparkline" viewBox="0 0 220 60" aria-hidden="true">
-        <polyline class="sparkline-path" points="4,48 32,40 58,44 86,26 114,32 142,14 170,20 216,6" />
-        <circle class="sparkline-dot" cx="216" cy="6" r="4" />
-      </svg>
-      <div class="growth-label">Growing steadily, safely</div>
+      <ul class="feature-list">
+        <li><span class="fico">🏦</span><span>Track PF, FD, RD &amp; Banks</span></li>
+        <li><span class="fico">📈</span><span>Live Portfolio Summary</span></li>
+        <li><span class="fico">💎</span><span>Share Market &amp; LIC Holdings</span></li>
+        <li><span class="fico">🔐</span><span>Local-first &amp; Private</span></li>
+        <li><span class="fico">⇄</span><span>Optional GitHub Sync</span></li>
+      </ul>
     </div>
 
-    <div class="login-right">
-      <h3>Sign in</h3>
-      <label>Username</label>
-      <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" />
-      <label>Password</label>
-      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" />
+    <div class="login-right" id="loginCard">
+      <h3>Welcome Back</h3>
+      <p class="subtitle">Sign in to your vault</p>
+
+      <label>👤 USERNAME</label>
+      <input type="text" id="loginUsername" placeholder="your username" autocomplete="username" />
+      <label>🔒 PASSWORD</label>
+      <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
       <div id="loginError" class="login-error hidden">Incorrect username or password.</div>
-      <button id="btnLogin" class="btn-primary btn-unlock"><span class="lock-emoji">🔓</span> Unlock</button>
+
+      <button id="btnLogin" class="btn-signin">Sign In <span class="arrow">→</span></button>
+      <a href="javascript:void(0)" id="forgotLink" class="forgot-link">🔑 Forgot password?</a>
+      <div id="forgotNote" class="forgot-note hidden">This is a local-only demo — there's no backend to reset a password. Use the demo credentials below.</div>
+
+      <div class="demo-box">
+        <div class="demo-label">✏️ DEMO</div>
+        <div class="demo-row">Username: <code>milansoni</code></div>
+        <div class="demo-row">Password: <code>123</code></div>
+      </div>
     </div>
 
   </div>
