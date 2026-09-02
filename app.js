@@ -324,12 +324,16 @@ function showLogin() {
 function attemptLogin() {
   const u = document.getElementById("loginUsername").value.trim();
   const p = document.getElementById("loginPassword").value;
+  const card = document.getElementById("loginCard");
   if (u === AUTH_USER && p === AUTH_PASS) {
     localStorage.setItem(LS_AUTH_KEY, "1");
     document.getElementById("loginError").classList.add("hidden");
     showApp();
   } else {
     document.getElementById("loginError").classList.remove("hidden");
+    card.classList.remove("shake");
+    void card.offsetWidth;
+    card.classList.add("shake");
   }
 }
 
