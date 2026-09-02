@@ -5,6 +5,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-selector";
 import { SpendBarChart } from "@/components/charts/spend-bar-chart";
 import { ExpenseForm } from "@/components/forms/expense-form";
+import { TijoriMark } from "@/components/ui/tijori-mark";
 import { FiltersBar, type SortKey } from "./filters-bar";
 import { ExpenseList } from "./expense-list";
 import {
@@ -155,9 +156,9 @@ export default async function ExpensesPage({
                     {fmtCurrency(c.amount)} · {c.percent.toFixed(0)}%
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-white/5">
+                <div className="mt-1 h-1.5 rounded-full bg-ink/8">
                   <div
-                    className="h-full rounded-full bg-accent"
+                    className="h-full rounded-full bg-muted/40"
                     style={{ width: `${Math.min(c.percent, 100)}%` }}
                   />
                 </div>
@@ -179,9 +180,13 @@ export default async function ExpensesPage({
 
       <div className="mt-3">
         {periodTransactions.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center">
-            <p className="text-muted">No expenses yet for {periodLabel.toLowerCase()}.</p>
-            <div className="mt-3">
+          <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-12 text-center">
+            <TijoriMark variant="bare" tone="ink" size={30} className="mx-auto opacity-40" />
+            <p className="mt-4 font-medium text-foreground">No expenses yet</p>
+            <p className="mt-1 text-[13.5px] text-muted">
+              Start tracking your spending for {periodLabel.toLowerCase()}.
+            </p>
+            <div className="mt-4">
               <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
                 <ExpenseForm categories={activeCategories} accounts={accounts} keepOpenOnAdd />
               </Modal>

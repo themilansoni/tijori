@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
 import { AccountForm } from "@/components/forms/account-form";
 import { AccountRow } from "./account-row";
+import { TijoriMark } from "@/components/ui/tijori-mark";
 import { accountBalance, fmtCurrency } from "@/lib/calculations";
 import type { Account, Transaction } from "@/lib/types";
 
@@ -39,18 +40,19 @@ export default async function AccountsPage() {
 
       {active.length > 0 && (
         <div className="mt-5">
-          <StatCard label="Net Balance" value={fmtCurrency(netBalance)} tone={netBalance < 0 ? "danger" : "accent"} />
+          <StatCard label="Net Balance" value={fmtCurrency(netBalance)} tone={netBalance < 0 ? "danger" : "success"} />
         </div>
       )}
 
       <div className="mt-6">
         {accounts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center">
-            <p className="text-muted">No accounts yet.</p>
-            <p className="mt-1 text-sm text-muted">
+          <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-12 text-center">
+            <TijoriMark variant="bare" tone="ink" size={30} className="mx-auto opacity-40" />
+            <p className="mt-4 font-medium text-foreground">No accounts yet</p>
+            <p className="mt-1 text-[13.5px] text-muted">
               Add a cash, bank, or card account to track where your money is.
             </p>
-            <div className="mt-3">
+            <div className="mt-4">
               <Modal trigger={<Button>+ Add Account</Button>} title="Add account">
                 <AccountForm />
               </Modal>

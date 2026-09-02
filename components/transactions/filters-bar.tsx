@@ -67,7 +67,7 @@ export function FiltersBar({
           onChange={(e) => setSearch(e.target.value)}
           onBlur={() => setParam("q", search)}
           placeholder="Search description / note…"
-          className="w-52 rounded-md border border-border bg-white/[0.03] px-2.5 py-1.5 text-sm text-foreground placeholder:text-[#55575f]"
+          className="w-52 rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted/60"
         />
       </form>
     </div>

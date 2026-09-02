@@ -3,6 +3,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { BudgetForm } from "@/components/forms/budget-form";
 import { BudgetRow } from "./budget-row";
+import { TijoriMark } from "@/components/ui/tijori-mark";
 import { budgetStatus, fmtCurrency } from "@/lib/calculations";
 import type { Budget, Category, Transaction } from "@/lib/types";
 
@@ -55,21 +56,21 @@ export default async function BudgetsPage() {
       {active.length > 0 && (
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-border bg-surface px-4 py-3.5">
-            <div className="font-mono text-[10.5px] uppercase tracking-wide text-muted">Total Budgeted</div>
+            <div className="text-[11.5px] font-medium uppercase tracking-wide text-muted">Total Budgeted</div>
             <div className="mt-1.5 text-xl font-bold">{fmtCurrency(totalBudget)}</div>
           </div>
           <div className="rounded-xl border border-border bg-surface px-4 py-3.5">
-            <div className="font-mono text-[10.5px] uppercase tracking-wide text-muted">Total Spent</div>
+            <div className="text-[11.5px] font-medium uppercase tracking-wide text-muted">Total Spent</div>
             <div className="mt-1.5 text-xl font-bold">{fmtCurrency(totalSpent)}</div>
           </div>
           <div className="rounded-xl border border-border bg-surface px-4 py-3.5">
-            <div className="font-mono text-[10.5px] uppercase tracking-wide text-muted">Remaining</div>
+            <div className="text-[11.5px] font-medium uppercase tracking-wide text-muted">Remaining</div>
             <div className={`mt-1.5 text-xl font-bold ${totalRemaining < 0 ? "text-danger" : ""}`}>
               {fmtCurrency(totalRemaining)}
             </div>
           </div>
           <div className="rounded-xl border border-border bg-surface px-4 py-3.5">
-            <div className="font-mono text-[10.5px] uppercase tracking-wide text-muted">Over Budget</div>
+            <div className="text-[11.5px] font-medium uppercase tracking-wide text-muted">Over Budget</div>
             <div className={`mt-1.5 text-xl font-bold ${overCount > 0 ? "text-danger" : ""}`}>
               {overCount} {overCount === 1 ? "category" : "categories"}
             </div>
@@ -79,12 +80,13 @@ export default async function BudgetsPage() {
 
       <div className="mt-6">
         {statuses.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center">
-            <p className="text-muted">No budgets configured.</p>
-            <p className="mt-1 text-sm text-muted">
+          <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-12 text-center">
+            <TijoriMark variant="bare" tone="ink" size={30} className="mx-auto opacity-40" />
+            <p className="mt-4 font-medium text-foreground">No budgets configured</p>
+            <p className="mt-1 text-[13.5px] text-muted">
               Create a budget to start tracking your spending limits.
             </p>
-            <div className="mt-3">
+            <div className="mt-4">
               <Modal trigger={<Button>+ Create budget</Button>} title="Create budget">
                 <BudgetForm categories={categoriesAvailableForNewBudget} />
               </Modal>

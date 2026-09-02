@@ -22,7 +22,7 @@ export function TransactionList({
   const categoryById = new Map(categories.map((c) => [c.id, c]));
   const accountById = new Map(accounts.map((a) => [a.id, a]));
   const noun = type === "income" ? "income" : "expenses";
-  const amountColor = type === "income" ? "text-accent" : "text-foreground";
+  const amountColor = type === "income" ? "text-success" : "text-foreground";
   const sign = type === "income" ? "+" : "−";
 
   function accountLabel(t: Transaction) {

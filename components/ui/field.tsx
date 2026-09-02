@@ -3,13 +3,13 @@ export function Field({
   ...props
 }: React.ComponentProps<"input"> & { label: string }) {
   return (
-    <label className="block mt-[18px] first:mt-0">
-      <span className="block font-mono text-[10.5px] font-medium tracking-[1px] uppercase text-muted">
+    <label className="block mt-5 first:mt-0">
+      <span className="block text-[12.5px] font-medium tracking-[0.2px] text-muted">
         {label}
       </span>
       <input
         {...props}
-        className="mt-2 w-full rounded-[9px] border border-border bg-white/[0.03] px-[13px] py-3 text-[14px] text-foreground placeholder:text-[#55575f] transition focus:outline-none focus:bg-white/[0.045] focus:border-accent focus:shadow-[0_0_0_3px_rgba(43,255,176,0.14)]"
+        className="mt-1.5 w-full rounded-[10px] border border-border bg-surface-2 px-[14px] py-3 text-[14.5px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_rgba(184,149,74,0.16)]"
       />
     </label>
   );
@@ -21,13 +21,13 @@ export function SelectField({
   ...props
 }: React.ComponentProps<"select"> & { label: string }) {
   return (
-    <label className="block mt-[18px] first:mt-0">
-      <span className="block font-mono text-[10.5px] font-medium tracking-[1px] uppercase text-muted">
+    <label className="block mt-5 first:mt-0">
+      <span className="block text-[12.5px] font-medium tracking-[0.2px] text-muted">
         {label}
       </span>
       <select
         {...props}
-        className="mt-2 w-full cursor-pointer rounded-[9px] border border-border bg-surface-2 px-[13px] py-3 text-[14px] text-foreground transition hover:border-white/25 focus:outline-none focus:bg-white/[0.045] focus:border-accent focus:shadow-[0_0_0_3px_rgba(43,255,176,0.14)]"
+        className="mt-1.5 w-full cursor-pointer rounded-[10px] border border-border bg-surface-2 px-[14px] py-3 text-[14.5px] text-foreground transition hover:border-border-strong focus:outline-none focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_rgba(184,149,74,0.16)]"
       >
         {children}
       </select>
@@ -40,13 +40,13 @@ export function TextareaField({
   ...props
 }: React.ComponentProps<"textarea"> & { label: string }) {
   return (
-    <label className="block mt-[18px] first:mt-0">
-      <span className="block font-mono text-[10.5px] font-medium tracking-[1px] uppercase text-muted">
+    <label className="block mt-5 first:mt-0">
+      <span className="block text-[12.5px] font-medium tracking-[0.2px] text-muted">
         {label}
       </span>
       <textarea
         {...props}
-        className="mt-2 w-full rounded-[9px] border border-border bg-white/[0.03] px-[13px] py-3 text-[14px] text-foreground placeholder:text-[#55575f] transition focus:outline-none focus:bg-white/[0.045] focus:border-accent focus:shadow-[0_0_0_3px_rgba(43,255,176,0.14)]"
+        className="mt-1.5 w-full rounded-[10px] border border-border bg-surface-2 px-[14px] py-3 text-[14.5px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_rgba(184,149,74,0.16)]"
       />
     </label>
   );
@@ -63,7 +63,7 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending}
-      className="mt-7 w-full rounded-[10px] bg-accent px-4 py-[13px] text-[14.5px] font-bold text-accent-foreground transition hover:shadow-[0_0_28px_rgba(43,255,176,0.45)] hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed"
+      className="mt-7 w-full rounded-[10px] bg-accent px-4 py-[13px] text-[14.5px] font-semibold text-accent-foreground transition hover:brightness-95 active:brightness-90 disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {pending ? "Please wait…" : children}
     </button>
@@ -72,7 +72,5 @@ export function SubmitButton({
 
 export function FormError({ message }: { message?: string }) {
   if (!message) return null;
-  return (
-    <p className="mt-3 font-mono text-[11.5px] text-danger">{message}</p>
-  );
+  return <p className="mt-3 text-[12.5px] text-danger">{message}</p>;
 }

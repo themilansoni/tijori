@@ -65,7 +65,7 @@ export function CustomRangePicker({ from, to }: { from?: string; to?: string }) 
           type="date"
           defaultValue={from}
           onChange={(e) => update("from", e.target.value)}
-          className="rounded-md border border-border bg-white/[0.03] px-2.5 py-1.5 text-sm text-foreground"
+          className="rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-sm text-foreground"
         />
       </label>
       <label className="flex items-center gap-2 text-sm text-muted">
@@ -74,7 +74,7 @@ export function CustomRangePicker({ from, to }: { from?: string; to?: string }) 
           type="date"
           defaultValue={to}
           onChange={(e) => update("to", e.target.value)}
-          className="rounded-md border border-border bg-white/[0.03] px-2.5 py-1.5 text-sm text-foreground"
+          className="rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-sm text-foreground"
         />
       </label>
     </div>

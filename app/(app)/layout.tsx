@@ -1,16 +1,23 @@
-import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
 import { TijoriMark } from "@/components/ui/tijori-mark";
+import { SidebarNav } from "@/components/nav/sidebar-nav";
+import { MobileNav } from "@/components/nav/mobile-nav";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/expenses", label: "Expenses" },
-  { href: "/income", label: "Income" },
-  { href: "/budgets", label: "Budgets" },
-  { href: "/accounts", label: "Accounts" },
-  { href: "/settings", label: "Settings" },
-];
+function LogoutForm() {
+  return (
+    <form action={logout}>
+      <button
+        type="submit"
+        className="flex w-full items-center gap-2.5 rounded-[10px] px-3.5 py-2.5 text-[14px] text-nav-muted transition hover:bg-white/[0.05] hover:text-nav-foreground"
+      >
+        <LogOut size={17} strokeWidth={1.75} />
+        Logout
+      </button>
+    </form>
+  );
+}
 
 export default async function AppLayout({
   children,
@@ -23,45 +30,29 @@ export default async function AppLayout({
   } = await supabase.auth.getUser();
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <TijoriMark size={24} className="rounded-[7px]" />
-            <span className="font-mono text-[13px] font-medium tracking-[3px] text-muted">
-              TIJORI
-            </span>
-          </Link>
+    <div className="flex min-h-screen flex-col bg-background text-foreground lg:flex-row">
+      <div className="min-w-0 flex-1 order-2 lg:order-1">
+        <MobileNav userEmail={user?.email} logoutForm={<LogoutForm />} />
+        <main className="mx-auto max-w-4xl px-5 py-7 lg:px-10 lg:py-10">{children}</main>
+      </div>
 
-          <nav className="flex items-center gap-1">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:bg-surface hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <span className="hidden sm:block font-mono text-[11px] text-muted">
-              {user?.email}
-            </span>
-            <form action={logout}>
-              <button
-                type="submit"
-                className="rounded-md border border-border px-3 py-1.5 text-[13px] text-muted transition hover:text-foreground hover:border-white/20"
-              >
-                Logout
-              </button>
-            </form>
-          </div>
+      <aside className="order-1 hidden w-64 shrink-0 flex-col bg-nav-bg px-4 py-6 text-nav-foreground lg:sticky lg:top-0 lg:order-2 lg:flex lg:h-screen">
+        <div className="flex items-center gap-2.5 px-2">
+          <TijoriMark size={28} className="rounded-[8px]" />
+          <span className="text-[16px] font-semibold tracking-tight">Tijori</span>
         </div>
-      </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+        <div className="mt-8 flex-1">
+          <SidebarNav />
+        </div>
+
+        <div className="border-t border-nav-border pt-3">
+          {user?.email && (
+            <div className="mb-1.5 truncate px-3.5 text-[12px] text-nav-muted">{user.email}</div>
+          )}
+          <LogoutForm />
+        </div>
+      </aside>
     </div>
   );
 }

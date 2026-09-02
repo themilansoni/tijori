@@ -3,10 +3,14 @@
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { fmtCurrency } from "@/lib/calculations";
 
+const TONE_COLOR = { gold: "#B8954A", sage: "#5F7358" };
+
 export function SpendBarChart({
   data,
+  tone = "gold",
 }: {
   data: { label: string; amount: number }[];
+  tone?: "gold" | "sage";
 }) {
   return (
     <div className="h-[180px] w-full">
@@ -14,28 +18,29 @@ export function SpendBarChart({
         <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <XAxis
             dataKey="label"
-            tick={{ fill: "#83858f", fontSize: 11 }}
-            axisLine={{ stroke: "rgba(255,255,255,0.09)" }}
+            tick={{ fill: "#6B6B67", fontSize: 11 }}
+            axisLine={{ stroke: "rgba(23,23,23,0.10)" }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: "#83858f", fontSize: 11 }}
+            tick={{ fill: "#6B6B67", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
             width={48}
           />
           <Tooltip
-            cursor={{ fill: "rgba(255,255,255,0.04)" }}
+            cursor={{ fill: "rgba(23,23,23,0.04)" }}
             contentStyle={{
-              background: "#17181b",
-              border: "1px solid rgba(255,255,255,0.09)",
-              borderRadius: 8,
+              background: "#ffffff",
+              border: "1px solid rgba(23,23,23,0.10)",
+              borderRadius: 10,
               fontSize: 12,
+              boxShadow: "0 8px 24px rgba(23,23,23,0.08)",
             }}
-            labelStyle={{ color: "#f2f3f5" }}
-            formatter={(value) => [fmtCurrency(Number(value)), "Spent"]}
+            labelStyle={{ color: "#171717" }}
+            formatter={(value) => [fmtCurrency(Number(value)), "Amount"]}
           />
-          <Bar dataKey="amount" fill="#2bffb0" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="amount" fill={TONE_COLOR[tone]} radius={[4, 4, 0, 0]} maxBarSize={36} />
         </BarChart>
       </ResponsiveContainer>
     </div>

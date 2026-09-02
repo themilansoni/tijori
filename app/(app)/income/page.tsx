@@ -7,6 +7,7 @@ import { SpendBarChart } from "@/components/charts/spend-bar-chart";
 import { TransactionForm } from "@/components/forms/transaction-form";
 import { FiltersBar, type SortKey } from "@/components/transactions/filters-bar";
 import { IncomeList } from "./income-list";
+import { TijoriMark } from "@/components/ui/tijori-mark";
 import {
   getPeriodRange,
   sumAmount,
@@ -136,7 +137,7 @@ export default async function IncomePage({
       )}
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={`Total (${periodLabel})`} value={fmtCurrency(totalIncome)} tone="accent" />
+        <StatCard label={`Total (${periodLabel})`} value={fmtCurrency(totalIncome)} tone="success" />
         <StatCard label="Daily Average" value={fmtCurrency(avgDaily)} />
         <StatCard label="Transactions" value={String(periodTransactions.length)} />
         <StatCard
@@ -149,7 +150,7 @@ export default async function IncomePage({
       {chart.length > 0 && (
         <div className="mt-6 rounded-xl border border-border bg-surface p-4">
           <div className="mb-2 text-sm font-semibold text-muted">Income trend</div>
-          <SpendBarChart data={chart} />
+          <SpendBarChart data={chart} tone="sage" />
         </div>
       )}
 
@@ -166,9 +167,9 @@ export default async function IncomePage({
                       {fmtCurrency(c.amount)} · {c.percent.toFixed(0)}%
                     </span>
                   </div>
-                  <div className="mt-1 h-1.5 rounded-full bg-white/5">
+                  <div className="mt-1 h-1.5 rounded-full bg-ink/8">
                     <div
-                      className="h-full rounded-full bg-accent"
+                      className="h-full rounded-full bg-success"
                       style={{ width: `${Math.min(c.percent, 100)}%` }}
                     />
                   </div>
@@ -185,7 +186,7 @@ export default async function IncomePage({
               {accountBreakdown.map((a) => (
                 <div key={a.account.id} className="flex items-center justify-between text-sm">
                   <span>{a.account.name}</span>
-                  <span className="font-semibold text-accent">{fmtCurrency(a.amount)}</span>
+                  <span className="font-semibold text-success">{fmtCurrency(a.amount)}</span>
                 </div>
               ))}
             </div>
@@ -205,9 +206,13 @@ export default async function IncomePage({
 
       <div className="mt-3">
         {periodTransactions.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center">
-            <p className="text-muted">No income yet for {periodLabel.toLowerCase()}.</p>
-            <div className="mt-3">
+          <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-12 text-center">
+            <TijoriMark variant="bare" tone="ink" size={30} className="mx-auto opacity-40" />
+            <p className="mt-4 font-medium text-foreground">No income yet</p>
+            <p className="mt-1 text-[13.5px] text-muted">
+              Record your earnings for {periodLabel.toLowerCase()}.
+            </p>
+            <div className="mt-4">
               <Modal trigger={<Button>+ Add Income</Button>} title="Add income">
                 <TransactionForm
                   type="income"

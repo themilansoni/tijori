@@ -4,9 +4,9 @@ const base =
   "inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed";
 
 const variants = {
-  primary: "bg-accent text-accent-foreground hover:brightness-105 hover:shadow-[0_0_20px_rgba(43,255,176,0.35)]",
-  ghost: "border border-border text-muted hover:text-foreground hover:border-white/20",
-  danger: "border border-danger/40 text-danger hover:bg-danger/10",
+  primary: "bg-accent text-accent-foreground hover:brightness-95 active:brightness-90 shadow-[var(--shadow-sm)]",
+  ghost: "border border-border text-muted hover:text-foreground hover:border-border-strong bg-surface",
+  danger: "border border-danger/35 text-danger hover:bg-danger/8",
 };
 
 const sizes = {

@@ -9,24 +9,19 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, undefined);
 
   return (
-    <div className="relative w-[400px] max-w-full rounded-[18px] border border-border bg-surface px-9 pt-[42px] pb-[34px] text-left shadow-[0_40px_90px_rgba(0,0,0,0.55)]">
-      <div className="absolute top-0 left-[14%] right-[14%] h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
-
-      <div className="font-mono text-[11px] font-medium tracking-[1.5px] text-accent mb-4">
-        // AUTHENTICATE
-      </div>
-      <h1 className="text-[25px] font-bold tracking-tight">Access your vault</h1>
-      <p className="mt-1.5 mb-0 text-[13.5px] text-muted">Sign in to continue</p>
+    <div className="w-[400px] max-w-full rounded-[var(--radius-lg)] border border-border bg-surface px-9 pt-9 pb-8 text-left shadow-[var(--shadow-lg)]">
+      <h1 className="text-[22px] font-semibold tracking-tight">Welcome back</h1>
+      <p className="mt-1 mb-0 text-[13.5px] text-muted">Sign in to your vault</p>
 
       <form action={formAction}>
         <Field label="Email" name="email" type="email" placeholder="you@example.com" required autoComplete="email" />
         <Field label="Password" name="password" type="password" placeholder="••••••••" required autoComplete="current-password" />
         <FormError message={state?.error} />
-        <SubmitButton pending={pending}>Sign in →</SubmitButton>
+        <SubmitButton pending={pending}>Sign in</SubmitButton>
       </form>
 
-      <p className="mt-6 text-center font-mono text-[11px] text-muted">
-        No account? <Link href="/signup" className="text-accent">Create one</Link>
+      <p className="mt-6 text-center text-[13px] text-muted">
+        No account? <Link href="/signup" className="font-medium text-accent">Create one</Link>
       </p>
     </div>
   );

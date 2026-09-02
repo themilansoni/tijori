@@ -2,7 +2,6 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/authorize";
-import { StatCard } from "@/components/ui/stat-card";
 import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-selector";
 import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
 import {
@@ -101,10 +100,16 @@ export default async function DashboardPage({
       ? `${start} → ${end}`
       : "This Month";
 
+  const hour = today.getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-[13.5px] text-muted">{greeting}</div>
+          <h1 className="mt-0.5 text-[26px] font-semibold tracking-tight">Your financial overview</h1>
+        </div>
         <PeriodSelector current={period} />
       </div>
       {period === "custom" && (
@@ -113,16 +118,29 @@ export default async function DashboardPage({
         </div>
       )}
 
-      {/* ---- Top summary ---- */}
-      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Total Balance" value={fmtCurrency(totalBalance)} tone={totalBalance < 0 ? "danger" : "default"} />
-        <StatCard label={`Income (${periodLabel})`} value={fmtCurrency(totalIncome)} tone="accent" />
-        <StatCard label={`Expense (${periodLabel})`} value={fmtCurrency(totalExpense)} />
-        <StatCard
-          label="Net Cash Flow"
-          value={fmtCurrency(netCashFlow)}
-          tone={netCashFlow < 0 ? "danger" : "accent"}
-        />
+      {/* ---- Hero balance ---- */}
+      <div className="mt-6 rounded-[var(--radius-lg)] border border-border bg-surface px-6 py-6 shadow-[var(--shadow-sm)] sm:px-8 sm:py-7">
+        <div className="text-[12px] font-medium uppercase tracking-[0.5px] text-muted">Current Balance</div>
+        <div className={`mt-1.5 text-[36px] font-semibold tracking-tight sm:text-[42px] ${totalBalance < 0 ? "text-danger" : ""}`}>
+          {fmtCurrency(totalBalance)}
+        </div>
+
+        <div className="mt-6 grid grid-cols-3 gap-4 border-t border-border pt-5">
+          <div>
+            <div className="text-[11.5px] font-medium uppercase tracking-[0.4px] text-muted">Income</div>
+            <div className="mt-1 text-lg font-semibold text-success sm:text-xl">{fmtCurrency(totalIncome)}</div>
+          </div>
+          <div>
+            <div className="text-[11.5px] font-medium uppercase tracking-[0.4px] text-muted">Expenses</div>
+            <div className="mt-1 text-lg font-semibold sm:text-xl">{fmtCurrency(totalExpense)}</div>
+          </div>
+          <div>
+            <div className="text-[11.5px] font-medium uppercase tracking-[0.4px] text-muted">Net Cash Flow</div>
+            <div className={`mt-1 text-lg font-semibold sm:text-xl ${netCashFlow < 0 ? "text-danger" : "text-success"}`}>
+              {fmtCurrency(netCashFlow)}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ---- Accounts ---- */}
@@ -157,7 +175,7 @@ export default async function DashboardPage({
             })}
             <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-sm font-semibold">
               <span>Net Balance</span>
-              <span className={totalBalance < 0 ? "text-danger" : "text-accent"}>{fmtCurrency(totalBalance)}</span>
+              <span className={totalBalance < 0 ? "text-danger" : "text-success"}>{fmtCurrency(totalBalance)}</span>
             </div>
           </div>
         )}
@@ -198,7 +216,7 @@ export default async function DashboardPage({
                       {fmtCurrency(c.amount)} · {c.percent.toFixed(0)}%
                     </span>
                   </div>
-                  <div className="mt-1 h-1 rounded-full bg-white/5">
+                  <div className="mt-1 h-1 rounded-full bg-ink/8">
                     <div className="h-full rounded-full bg-foreground/60" style={{ width: `${Math.min(c.percent, 100)}%` }} />
                   </div>
                 </div>
@@ -215,7 +233,7 @@ export default async function DashboardPage({
             </Link>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-accent">{fmtCurrency(totalIncome)}</div>
+            <div className="text-lg font-bold text-success">{fmtCurrency(totalIncome)}</div>
             <div className="text-[11px] text-muted">Total income</div>
           </div>
           {incomeCatBreakdown.length > 0 && (
@@ -223,7 +241,7 @@ export default async function DashboardPage({
               {incomeCatBreakdown.slice(0, 4).map((c) => (
                 <div key={c.category.id} className="flex items-center justify-between text-xs">
                   <span>{c.category.name}</span>
-                  <span className="font-semibold text-accent">{fmtCurrency(c.amount)}</span>
+                  <span className="font-semibold text-success">{fmtCurrency(c.amount)}</span>
                 </div>
               ))}
             </div>
@@ -262,9 +280,9 @@ export default async function DashboardPage({
                     {fmtCurrency(s.spent)} / {fmtCurrency(s.budget.amount)}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-white/5">
+                <div className="mt-1 h-1.5 rounded-full bg-ink/8">
                   <div
-                    className={`h-full rounded-full ${s.isOverBudget ? "bg-danger" : "bg-accent"}`}
+                    className={`h-full rounded-full ${s.isOverBudget ? "bg-danger" : "bg-success"}`}
                     style={{ width: `${Math.min(s.usedPercent, 100)}%` }}
                   />
                 </div>
@@ -306,7 +324,7 @@ export default async function DashboardPage({
                     {t.account_id ? ` · ${accounts.find((a) => a.id === t.account_id)?.name ?? ""}` : ""}
                   </div>
                 </div>
-                <span className={`font-semibold ${t.type === "income" ? "text-accent" : "text-foreground"}`}>
+                <span className={`font-semibold ${t.type === "income" ? "text-success" : "text-foreground"}`}>
                   {t.type === "income" ? "+" : "−"}
                   {fmtCurrency(t.amount)}
                 </span>
