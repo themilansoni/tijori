@@ -364,15 +364,16 @@ document.getElementById("togglePw").addEventListener("click", () => {
   const btn = document.getElementById("togglePw");
   const show = pw.type === "password";
   pw.type = show ? "text" : "password";
-  btn.textContent = show ? "🙈" : "👁";
+  btn.textContent = show ? "hide" : "show";
   btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
 });
 
-// ---------- Background orb parallax ----------
-(function initOrbParallax() {
+// ---------- Background glow + grid parallax ----------
+(function initBgParallax() {
   const bg = document.getElementById("liveBg");
   if (!bg) return;
-  const orbs = Array.from(bg.querySelectorAll(".orb"));
+  const glow = bg.querySelector(".glow");
+  const grid = bg.querySelector(".dot-grid");
   let targetX = 0, targetY = 0, curX = 0, curY = 0;
 
   document.getElementById("loginScreen").addEventListener("mousemove", (e) => {
@@ -381,13 +382,10 @@ document.getElementById("togglePw").addEventListener("click", () => {
   });
 
   function tick() {
-    curX += (targetX - curX) * 0.04;
-    curY += (targetY - curY) * 0.04;
-    orbs.forEach((orb, i) => {
-      const depth = (i + 1) * 6;
-      orb.style.setProperty("--px", `${curX * depth}px`);
-      orb.style.setProperty("--py", `${curY * depth}px`);
-    });
+    curX += (targetX - curX) * 0.03;
+    curY += (targetY - curY) * 0.03;
+    if (glow) glow.style.transform = `translate(calc(-50% + ${curX * 30}px), calc(-50% + ${curY * 30}px))`;
+    if (grid) grid.style.transform = `translate(${curX * 8}px, ${curY * 8}px)`;
     requestAnimationFrame(tick);
   }
   tick();
