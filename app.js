@@ -349,6 +349,35 @@ document.getElementById("btnLogout").addEventListener("click", () => {
   showLogin();
 });
 
+document.getElementById("forgotLink").addEventListener("click", () => {
+  document.getElementById("forgotNote").classList.toggle("hidden");
+});
+
+// ---------- Background orb parallax ----------
+(function initOrbParallax() {
+  const bg = document.getElementById("liveBg");
+  if (!bg) return;
+  const orbs = Array.from(bg.querySelectorAll(".orb"));
+  let targetX = 0, targetY = 0, curX = 0, curY = 0;
+
+  document.getElementById("loginScreen").addEventListener("mousemove", (e) => {
+    targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+    targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  function tick() {
+    curX += (targetX - curX) * 0.04;
+    curY += (targetY - curY) * 0.04;
+    orbs.forEach((orb, i) => {
+      const depth = (i + 1) * 6;
+      orb.style.setProperty("--px", `${curX * depth}px`);
+      orb.style.setProperty("--py", `${curY * depth}px`);
+    });
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
 if (isLoggedIn()) {
   showApp();
 } else {
