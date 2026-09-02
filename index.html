@@ -6,124 +6,40 @@
 <title>Tijori — Investment Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="loginScreen" class="login-screen">
   <div class="live-bg" id="liveBg" aria-hidden="true">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-    <div class="orb orb-4"></div>
-    <div class="dot-field">
-      <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
-      <span class="dot d4"></span><span class="dot d5"></span><span class="dot d6"></span>
-    </div>
+    <div class="dot-grid"></div>
+    <div class="glow"></div>
+    <div class="scan-line"></div>
   </div>
 
   <div class="login-content">
 
-    <div class="login-left">
-      <div class="wordmark">
-        <span class="safe-icon" aria-hidden="true">
-          <svg viewBox="0 0 100 100" class="safe-svg">
-            <rect x="6" y="6" width="88" height="88" rx="18" fill="#3d5940" stroke="#26382a" stroke-width="3"/>
-            <rect x="17" y="17" width="66" height="66" rx="11" fill="#4f7350" stroke="#26382a" stroke-width="2"/>
-            <circle cx="14" cy="14" r="3" fill="#26382a"/>
-            <circle cx="86" cy="14" r="3" fill="#26382a"/>
-            <circle cx="14" cy="86" r="3" fill="#26382a"/>
-            <circle cx="86" cy="86" r="3" fill="#26382a"/>
-            <rect x="82" y="42" width="12" height="16" rx="3" fill="#26382a"/>
-            <g class="safe-dial" style="transform-origin: 50px 50px;">
-              <circle cx="50" cy="50" r="21" fill="#d9b97a" stroke="#8a6f3f" stroke-width="2"/>
-              <circle cx="50" cy="50" r="21" fill="none" stroke="#f3dfae" stroke-width="1" opacity="0.6"/>
-              <g stroke="#8a6f3f" stroke-width="1.4">
-                <line x1="50" y1="31" x2="50" y2="36"/>
-                <line x1="50" y1="64" x2="50" y2="69"/>
-                <line x1="31" y1="50" x2="36" y2="50"/>
-                <line x1="64" y1="50" x2="69" y2="50"/>
-                <line x1="37" y1="37" x2="40.5" y2="40.5"/>
-                <line x1="63" y1="63" x2="59.5" y2="59.5"/>
-                <line x1="63" y1="37" x2="59.5" y2="40.5"/>
-                <line x1="37" y1="63" x2="40.5" y2="59.5"/>
-              </g>
-              <circle cx="50" cy="50" r="5" fill="#26382a"/>
-              <line x1="50" y1="50" x2="50" y2="36" stroke="#26382a" stroke-width="2" stroke-linecap="round"/>
-            </g>
-          </svg>
-        </span>
-        Tijori
-      </div>
-
-      <h1 class="headline">
-        Save today.<br>
-        <span class="hl-accent">Grow steadily.</span><br>
-        Secure tomorrow.
-      </h1>
-      <p class="sub-copy">Track your PF, FDs, RDs, bank balances and share market holdings in one calm, private dashboard.</p>
-
-      <div class="illus-cluster">
-        <div class="blob-shape" aria-hidden="true"></div>
-
-        <div class="float-card card-value">
-          <div class="fc-label">Total Vault Value</div>
-          <div class="fc-value">₹1,50,000</div>
-          <div class="fc-delta">↑ 25.0% gain</div>
-        </div>
-
-        <div class="float-card card-donut">
-          <div class="fc-label">Category Split</div>
-          <div class="donut-row">
-            <svg viewBox="0 0 42 42" class="donut">
-              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#e5e9f2" stroke-width="6"></circle>
-              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#4c6ef5" stroke-width="6" stroke-dasharray="34 66" stroke-dashoffset="25" class="donut-seg"></circle>
-              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#22c55e" stroke-width="6" stroke-dasharray="22 78" stroke-dashoffset="-9" class="donut-seg"></circle>
-              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#f59e0b" stroke-width="6" stroke-dasharray="18 82" stroke-dashoffset="-31" class="donut-seg"></circle>
-              <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#14b8a6" stroke-width="6" stroke-dasharray="26 74" stroke-dashoffset="-49" class="donut-seg"></circle>
-            </svg>
-            <ul class="donut-legend">
-              <li><i style="background:#4c6ef5"></i>PF</li>
-              <li><i style="background:#22c55e"></i>Banks</li>
-              <li><i style="background:#f59e0b"></i>FD</li>
-              <li><i style="background:#14b8a6"></i>Shares</li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="float-card card-progress">
-          <div class="fc-label">Savings Goal</div>
-          <div class="fc-value small">71%</div>
-          <div class="progress-track"><div class="progress-fill"></div></div>
-          <div class="fc-sub">₹1.24 Cr / ₹1.75 Cr</div>
-        </div>
-      </div>
-
-      <div class="secure-badge">
-        <span class="shield">🔒</span>
-        <span>Your data stays on this device — private by design.</span>
-      </div>
+    <div class="brand-mark">
+      <span class="brand-dot"></span>
+      <span class="brand-text">TIJORI<span class="cursor">_</span></span>
     </div>
 
-    <div class="login-right" id="loginCard">
-      <h3>Welcome back <span class="wave">👋</span></h3>
-      <p class="subtitle">Sign in to continue to your vault</p>
+    <div class="auth-card" id="loginCard">
+      <div class="eyebrow">// AUTHENTICATE</div>
+      <h1 class="auth-title">Access your vault</h1>
+      <p class="auth-sub">Sign in to continue</p>
 
-      <label>Username</label>
+      <label for="loginUsername">Username</label>
+      <input type="text" id="loginUsername" placeholder="your username" autocomplete="username" />
+
+      <label for="loginPassword">Password</label>
       <div class="input-wrap">
-        <span class="input-icon">👤</span>
-        <input type="text" id="loginUsername" placeholder="your username" autocomplete="username" />
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+        <button type="button" id="togglePw" class="pw-toggle" aria-label="Show password">show</button>
       </div>
 
-      <label>Password</label>
-      <div class="input-wrap">
-        <span class="input-icon">🔒</span>
-        <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
-        <button type="button" id="togglePw" class="pw-toggle" aria-label="Show password">👁</button>
-      </div>
-
-      <div id="loginError" class="login-error hidden">Incorrect username or password.</div>
+      <div id="loginError" class="login-error hidden">incorrect username or password</div>
 
       <div class="row-between">
         <label class="remember-row">
@@ -134,13 +50,12 @@
       </div>
       <div id="forgotNote" class="forgot-note hidden">This is a local-only demo — there's no backend to reset a password. Use the credentials below.</div>
 
-      <button id="btnLogin" class="btn-signin">Sign In</button>
+      <button id="btnLogin" class="btn-signin">Sign in<span class="btn-arrow">→</span></button>
 
-      <div class="demo-hint">
-        Demo access — <code>milansoni</code> / <code>123</code>
-      </div>
+      <div class="demo-hint">demo <span class="demo-arrow">→</span> <code>milansoni</code> / <code>123</code></div>
     </div>
 
+    <div class="footnote">Your data stays on this device — private by design.</div>
   </div>
 </div>
 
