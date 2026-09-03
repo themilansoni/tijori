@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
+import { can } from "@/lib/authorize";
 import { TijoriMark } from "@/components/ui/tijori-mark";
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { MobileNav } from "@/components/nav/mobile-nav";
@@ -29,6 +30,8 @@ export default async function AppLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const canViewUsers = await can("users", "view");
+  const hiddenHrefs = canViewUsers ? [] : ["/users"];
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground lg:flex-row">
@@ -39,7 +42,7 @@ export default async function AppLayout({
         </div>
 
         <div className="mt-8 flex-1">
-          <SidebarNav />
+          <SidebarNav hiddenHrefs={hiddenHrefs} />
         </div>
 
         <div className="border-t border-nav-border pt-3">
@@ -54,7 +57,7 @@ export default async function AppLayout({
       </aside>
 
       <div className="min-w-0 flex-1">
-        <MobileNav userEmail={user?.email} logoutForm={<LogoutForm />} />
+        <MobileNav userEmail={user?.email} logoutForm={<LogoutForm />} hiddenHrefs={hiddenHrefs} />
         <main className="mx-auto max-w-4xl px-5 py-7 lg:px-10 lg:py-10">{children}</main>
       </div>
     </div>

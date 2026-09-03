@@ -6,7 +6,15 @@ import { TijoriMark } from "@/components/ui/tijori-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarNav } from "./sidebar-nav";
 
-export function MobileNav({ userEmail, logoutForm }: { userEmail?: string; logoutForm: React.ReactNode }) {
+export function MobileNav({
+  userEmail,
+  logoutForm,
+  hiddenHrefs,
+}: {
+  userEmail?: string;
+  logoutForm: React.ReactNode;
+  hiddenHrefs?: string[];
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -57,7 +65,7 @@ export function MobileNav({ userEmail, logoutForm }: { userEmail?: string; logou
             </div>
 
             <div className="mt-6 flex-1">
-              <SidebarNav onNavigate={() => setOpen(false)} />
+              <SidebarNav onNavigate={() => setOpen(false)} hiddenHrefs={hiddenHrefs} />
             </div>
 
             <div className="border-t border-nav-border pt-4">

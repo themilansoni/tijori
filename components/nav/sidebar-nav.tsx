@@ -4,12 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "./nav-items";
 
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+export function SidebarNav({
+  onNavigate,
+  hiddenHrefs,
+}: {
+  onNavigate?: () => void;
+  hiddenHrefs?: string[];
+}) {
   const pathname = usePathname();
+  const items = hiddenHrefs ? NAV_ITEMS.filter((item) => !hiddenHrefs.includes(item.href)) : NAV_ITEMS;
 
   return (
     <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
         return (

@@ -79,3 +79,28 @@ export const PAYMENT_METHODS = [
 ] as const;
 
 export type PeriodKey = "today" | "week" | "month" | "year" | "custom";
+
+export type Role = {
+  id: string;
+  name: string;
+  is_system: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PermAction = "view" | "create" | "edit" | "delete";
+
+export type Permission = {
+  id: string;
+  module: string;
+  action: PermAction;
+};
+
+export type Profile = {
+  id: string;
+  full_name: string | null;
+  status: "active" | "inactive";
+  role_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
