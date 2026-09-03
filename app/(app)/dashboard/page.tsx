@@ -31,23 +31,24 @@ export default async function DashboardPage({
       ? getPeriodRange("custom", today, { from: sp.from, to: sp.to })
       : getPeriodRange(period === "custom" ? "month" : period, today);
 
-  if (!(await can("dashboard", "view"))) {
+  const supabase = await createClient();
+
+  const [allowed, { data: txRaw }, { data: categoriesRaw }, { data: accountsRaw }, { data: budgetsRaw }] =
+    await Promise.all([
+      can("dashboard", "view"),
+      supabase.from("transactions").select("*").order("created_at", { ascending: false }),
+      supabase.from("categories").select("*"),
+      supabase.from("accounts").select("*").order("name"),
+      supabase.from("budgets").select("*, categories!inner(type)").eq("categories.type", "expense"),
+    ]);
+
+  if (!allowed) {
     return (
       <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted">
         You don&apos;t have permission to view the dashboard.
       </div>
     );
   }
-
-  const supabase = await createClient();
-
-  const [{ data: txRaw }, { data: categoriesRaw }, { data: accountsRaw }, { data: budgetsRaw }] =
-    await Promise.all([
-      supabase.from("transactions").select("*").order("created_at", { ascending: false }),
-      supabase.from("categories").select("*"),
-      supabase.from("accounts").select("*").order("name"),
-      supabase.from("budgets").select("*, categories!inner(type)").eq("categories.type", "expense"),
-    ]);
 
   const allTransactions = (txRaw ?? []) as Transaction[];
   const categories = (categoriesRaw ?? []) as Category[];
