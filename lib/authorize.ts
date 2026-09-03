@@ -7,6 +7,7 @@ export type Module =
   | "budgets"
   | "categories"
   | "accounts"
+  | "investments"
   | "reports"
   | "users"
   | "roles"

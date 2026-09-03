@@ -15,7 +15,16 @@ import {
   addMonths,
   addYears,
 } from "date-fns";
-import type { Account, Budget, BudgetPeriod, Category, PeriodKey, Transaction } from "./types";
+import type {
+  Account,
+  Budget,
+  BudgetPeriod,
+  Category,
+  Investment,
+  InvestmentTransaction,
+  PeriodKey,
+  Transaction,
+} from "./types";
 
 const ISO = "yyyy-MM-dd";
 const toISO = (d: Date) => format(d, ISO);
@@ -248,6 +257,51 @@ export function amountByAccount(transactions: Transaction[], accounts: Account[]
 export function fmtCurrency(n: number): string {
   const sign = n < 0 ? "-" : "";
   return `${sign}₹${Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+}
+
+/** Net invested = all "invest" contributions minus all "withdraw" ones, for one investment. */
+export function investmentNetInvested(
+  investmentId: string,
+  allInvestmentTransactions: InvestmentTransaction[]
+): number {
+  return allInvestmentTransactions
+    .filter((t) => t.investment_id === investmentId)
+    .reduce((sum, t) => sum + (t.type === "invest" ? Number(t.amount) : -Number(t.amount)), 0);
+}
+
+export type InvestmentTotals = {
+  totalInvested: number;
+  totalWithdrawn: number;
+  netInvested: number;
+};
+
+/** Portfolio-wide totals across every investment, from its full contribution history. */
+export function investmentPortfolioTotals(
+  allInvestmentTransactions: InvestmentTransaction[]
+): InvestmentTotals {
+  let totalInvested = 0;
+  let totalWithdrawn = 0;
+  for (const t of allInvestmentTransactions) {
+    if (t.type === "invest") totalInvested += Number(t.amount);
+    else totalWithdrawn += Number(t.amount);
+  }
+  return { totalInvested, totalWithdrawn, netInvested: totalInvested - totalWithdrawn };
+}
+
+export type InvestmentBreakdown = { investment: Investment; amount: number; percent: number };
+
+/** Net-invested amount per investment, sorted largest first — for a portfolio breakdown view. */
+export function investmentBreakdown(
+  investments: Investment[],
+  allInvestmentTransactions: InvestmentTransaction[]
+): InvestmentBreakdown[] {
+  const { netInvested: total } = investmentPortfolioTotals(allInvestmentTransactions);
+  return investments
+    .map((inv) => {
+      const amount = investmentNetInvested(inv.id, allInvestmentTransactions);
+      return { investment: inv, amount, percent: total > 0 ? (amount / total) * 100 : 0 };
+    })
+    .sort((a, b) => b.amount - a.amount);
 }
 
 export function nextBudgetStartExample(period: BudgetPeriod, today: Date): Date {

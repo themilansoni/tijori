@@ -96,6 +96,56 @@ export type Permission = {
   action: PermAction;
 };
 
+export type InvestmentType =
+  | "mutual_fund"
+  | "stocks"
+  | "fixed_deposit"
+  | "ppf"
+  | "epf"
+  | "gold"
+  | "real_estate"
+  | "crypto"
+  | "bonds"
+  | "other";
+
+export const INVESTMENT_TYPES: { value: InvestmentType; label: string }[] = [
+  { value: "mutual_fund", label: "Mutual Fund" },
+  { value: "stocks", label: "Stocks" },
+  { value: "fixed_deposit", label: "Fixed Deposit" },
+  { value: "ppf", label: "PPF" },
+  { value: "epf", label: "EPF" },
+  { value: "gold", label: "Gold" },
+  { value: "real_estate", label: "Real Estate" },
+  { value: "crypto", label: "Crypto" },
+  { value: "bonds", label: "Bonds" },
+  { value: "other", label: "Other" },
+];
+
+export type Investment = {
+  id: string;
+  user_id: string;
+  name: string;
+  type: InvestmentType;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InvestmentTxType = "invest" | "withdraw";
+
+export type InvestmentTransaction = {
+  id: string;
+  user_id: string;
+  investment_id: string;
+  type: InvestmentTxType;
+  amount: number;
+  transaction_date: string;
+  account_id: string | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Profile = {
   id: string;
   full_name: string | null;

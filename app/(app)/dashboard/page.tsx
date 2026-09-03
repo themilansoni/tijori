@@ -13,9 +13,20 @@ import {
   budgetStatus,
   incomeExpenseByDay,
   incomeExpenseByMonth,
+  investmentBreakdown,
+  investmentPortfolioTotals,
   fmtCurrency,
 } from "@/lib/calculations";
-import { ACCOUNT_TYPES, type Account, type Budget, type Category, type PeriodKey, type Transaction } from "@/lib/types";
+import {
+  ACCOUNT_TYPES,
+  type Account,
+  type Budget,
+  type Category,
+  type Investment,
+  type InvestmentTransaction,
+  type PeriodKey,
+  type Transaction,
+} from "@/lib/types";
 
 export default async function DashboardPage({
   searchParams,
@@ -33,14 +44,23 @@ export default async function DashboardPage({
 
   const supabase = await createClient();
 
-  const [allowed, { data: txRaw }, { data: categoriesRaw }, { data: accountsRaw }, { data: budgetsRaw }] =
-    await Promise.all([
-      can("dashboard", "view", supabase),
-      supabase.from("transactions").select("*").order("created_at", { ascending: false }),
-      supabase.from("categories").select("*"),
-      supabase.from("accounts").select("*").order("name"),
-      supabase.from("budgets").select("*, categories!inner(type)").eq("categories.type", "expense"),
-    ]);
+  const [
+    allowed,
+    { data: txRaw },
+    { data: categoriesRaw },
+    { data: accountsRaw },
+    { data: budgetsRaw },
+    { data: investmentsRaw },
+    { data: investmentTxRaw },
+  ] = await Promise.all([
+    can("dashboard", "view", supabase),
+    supabase.from("transactions").select("*").order("created_at", { ascending: false }),
+    supabase.from("categories").select("*"),
+    supabase.from("accounts").select("*").order("name"),
+    supabase.from("budgets").select("*, categories!inner(type)").eq("categories.type", "expense"),
+    supabase.from("investments").select("*").eq("is_active", true).order("name"),
+    supabase.from("investment_transactions").select("*"),
+  ]);
 
   if (!allowed) {
     return (
@@ -54,6 +74,8 @@ export default async function DashboardPage({
   const categories = (categoriesRaw ?? []) as Category[];
   const accounts = (accountsRaw ?? []) as Account[];
   const budgets = (budgetsRaw ?? []) as Budget[];
+  const activeInvestments = (investmentsRaw ?? []) as Investment[];
+  const allInvestmentTx = (investmentTxRaw ?? []) as InvestmentTransaction[];
 
   const periodTransactions = allTransactions.filter(
     (t) => t.transaction_date >= start && t.transaction_date <= end
@@ -76,6 +98,9 @@ export default async function DashboardPage({
   const totalBudget = budgetStatuses.reduce((sum, s) => sum + Number(s.budget.amount), 0);
   const totalBudgetSpent = budgetStatuses.reduce((sum, s) => sum + s.spent, 0);
   const budgetRemaining = totalBudget - totalBudgetSpent;
+
+  const { netInvested } = investmentPortfolioTotals(allInvestmentTx);
+  const investmentRows = investmentBreakdown(activeInvestments, allInvestmentTx);
 
   const expenseCatBreakdown = categorySpending(periodExpense, categories);
   const incomeCatBreakdown = categorySpending(periodIncome, categories);
@@ -181,6 +206,30 @@ export default async function DashboardPage({
           </div>
         )}
       </section>
+
+      {/* ---- Investments ---- */}
+      {(activeInvestments.length > 0 || allInvestmentTx.length > 0) && (
+        <section className="mt-6 rounded-xl border border-border bg-surface p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-muted">Investments</h2>
+            <Link href="/investments" className="text-xs text-accent">
+              Manage →
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {investmentRows.map(({ investment, amount }) => (
+              <div key={investment.id} className="flex items-center justify-between text-sm">
+                <span>{investment.name}</span>
+                <span className="font-semibold">{fmtCurrency(amount)}</span>
+              </div>
+            ))}
+            <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-sm font-semibold">
+              <span>Net Invested</span>
+              <span className={netInvested < 0 ? "text-danger" : "text-success"}>{fmtCurrency(netInvested)}</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ---- Expense + Income overview ---- */}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
