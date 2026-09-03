@@ -3,14 +3,14 @@
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { fmtCurrency } from "@/lib/calculations";
 
-const TONE_COLOR = { gold: "#B8954A", sage: "#5F7358" };
+const TONE_COLOR = { accent: "var(--color-accent)", success: "var(--color-success)" };
 
 export function SpendBarChart({
   data,
-  tone = "gold",
+  tone = "accent",
 }: {
   data: { label: string; amount: number }[];
-  tone?: "gold" | "sage";
+  tone?: "accent" | "success";
 }) {
   return (
     <div className="h-[180px] w-full">
@@ -18,26 +18,26 @@ export function SpendBarChart({
         <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <XAxis
             dataKey="label"
-            tick={{ fill: "#6B6B67", fontSize: 11 }}
-            axisLine={{ stroke: "rgba(23,23,23,0.10)" }}
+            tick={{ fill: "var(--color-muted)", fontSize: 11 }}
+            axisLine={{ stroke: "var(--color-border)" }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: "#6B6B67", fontSize: 11 }}
+            tick={{ fill: "var(--color-muted)", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
             width={48}
           />
           <Tooltip
-            cursor={{ fill: "rgba(23,23,23,0.04)" }}
+            cursor={{ fill: "var(--color-surface-2)" }}
             contentStyle={{
-              background: "#ffffff",
-              border: "1px solid rgba(23,23,23,0.10)",
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
               borderRadius: 10,
               fontSize: 12,
-              boxShadow: "0 8px 24px rgba(23,23,23,0.08)",
+              boxShadow: "var(--shadow-md)",
             }}
-            labelStyle={{ color: "#171717" }}
+            labelStyle={{ color: "var(--color-foreground)" }}
             formatter={(value) => [fmtCurrency(Number(value)), "Amount"]}
           />
           <Bar dataKey="amount" fill={TONE_COLOR[tone]} radius={[4, 4, 0, 0]} maxBarSize={36} />

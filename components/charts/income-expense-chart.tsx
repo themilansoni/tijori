@@ -11,34 +11,34 @@ export function IncomeExpenseChart({ data }: { data: IncomeExpensePoint[] }) {
         <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <XAxis
             dataKey="label"
-            tick={{ fill: "#6B6B67", fontSize: 11 }}
-            axisLine={{ stroke: "rgba(23,23,23,0.10)" }}
+            tick={{ fill: "var(--color-muted)", fontSize: 11 }}
+            axisLine={{ stroke: "var(--color-border)" }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: "#6B6B67", fontSize: 11 }}
+            tick={{ fill: "var(--color-muted)", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
             width={52}
           />
           <Tooltip
-            cursor={{ fill: "rgba(23,23,23,0.04)" }}
+            cursor={{ fill: "var(--color-surface-2)" }}
             contentStyle={{
-              background: "#ffffff",
-              border: "1px solid rgba(23,23,23,0.10)",
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
               borderRadius: 10,
               fontSize: 12,
-              boxShadow: "0 8px 24px rgba(23,23,23,0.08)",
+              boxShadow: "var(--shadow-md)",
             }}
-            labelStyle={{ color: "#171717" }}
+            labelStyle={{ color: "var(--color-foreground)" }}
             formatter={(value, name) => [fmtCurrency(Number(value)), name === "income" ? "Income" : "Expense"]}
           />
           <Legend
-            wrapperStyle={{ fontSize: 12, color: "#6B6B67" }}
+            wrapperStyle={{ fontSize: 12, color: "var(--color-muted)" }}
             formatter={(value) => (value === "income" ? "Income" : "Expense")}
           />
-          <Bar dataKey="income" fill="#5F7358" radius={[3, 3, 0, 0]} maxBarSize={18} />
-          <Bar dataKey="expense" fill="#B8954A" radius={[3, 3, 0, 0]} maxBarSize={18} />
+          <Bar dataKey="income" fill="var(--color-success)" radius={[3, 3, 0, 0]} maxBarSize={18} />
+          <Bar dataKey="expense" fill="var(--color-accent)" radius={[3, 3, 0, 0]} maxBarSize={18} />
         </BarChart>
       </ResponsiveContainer>
     </div>

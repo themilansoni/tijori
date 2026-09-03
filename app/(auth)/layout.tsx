@@ -5,7 +5,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background px-6 py-14">
       <div
         className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[820px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-60 blur-[90px]"
-        style={{ background: "radial-gradient(circle, rgba(184,149,74,0.14), transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, rgba(79,70,229,0.14), transparent 70%)" }}
         aria-hidden="true"
       />
 

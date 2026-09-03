@@ -37,7 +37,7 @@ export function BudgetRow({
         </div>
       </div>
 
-      <div className="mt-3 h-2 rounded-full bg-ink/8">
+      <div className="mt-3 h-2 rounded-full bg-foreground/8">
         <div
           className={`h-full rounded-full ${isOverBudget ? "bg-danger" : "bg-success"}`}
           style={{ width: `${pct}%` }}

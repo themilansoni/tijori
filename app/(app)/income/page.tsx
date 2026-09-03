@@ -150,7 +150,7 @@ export default async function IncomePage({
       {chart.length > 0 && (
         <div className="mt-6 rounded-xl border border-border bg-surface p-4">
           <div className="mb-2 text-sm font-semibold text-muted">Income trend</div>
-          <SpendBarChart data={chart} tone="sage" />
+          <SpendBarChart data={chart} tone="success" />
         </div>
       )}
 
@@ -167,7 +167,7 @@ export default async function IncomePage({
                       {fmtCurrency(c.amount)} · {c.percent.toFixed(0)}%
                     </span>
                   </div>
-                  <div className="mt-1 h-1.5 rounded-full bg-ink/8">
+                  <div className="mt-1 h-1.5 rounded-full bg-foreground/8">
                     <div
                       className="h-full rounded-full bg-success"
                       style={{ width: `${Math.min(c.percent, 100)}%` }}

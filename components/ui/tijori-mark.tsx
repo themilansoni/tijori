@@ -6,17 +6,17 @@
 export function TijoriMark({
   size = 24,
   variant = "badge",
-  tone = "gold",
+  tone = "accent",
   className = "",
 }: {
   size?: number;
-  /** "badge": rounded ink square backdrop (favicon/sidebar). "bare": frame + diamond only, no backdrop. */
+  /** "badge": rounded dark square backdrop (favicon/sidebar). "bare": frame + diamond only, no backdrop. */
   variant?: "badge" | "bare";
   /** Color of the frame/diamond when variant="bare". */
-  tone?: "gold" | "ink";
+  tone?: "accent" | "ink";
   className?: string;
 }) {
-  const markColor = tone === "gold" ? "#B8954A" : "#171717";
+  const markColor = tone === "accent" ? "var(--color-accent)" : "var(--color-foreground)";
 
   if (variant === "bare") {
     return (
@@ -43,9 +43,9 @@ export function TijoriMark({
       className={className}
       aria-hidden="true"
     >
-      <rect x="1" y="1" width="30" height="30" rx="8" fill="#171717" />
-      <rect x="8.5" y="8.5" width="15" height="15" rx="3.5" fill="none" stroke="#B8954A" strokeWidth="1.6" />
-      <path d="M16 11.8 L20.2 16 L16 20.2 L11.8 16 Z" fill="#B8954A" />
+      <rect x="1" y="1" width="30" height="30" rx="8" fill="#18181B" />
+      <rect x="8.5" y="8.5" width="15" height="15" rx="3.5" fill="none" stroke="#818CF8" strokeWidth="1.6" />
+      <path d="M16 11.8 L20.2 16 L16 20.2 L11.8 16 Z" fill="#818CF8" />
     </svg>
   );
 }

@@ -20,8 +20,8 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             aria-current={active ? "page" : undefined}
             className={`flex items-center gap-3 rounded-[10px] px-3.5 py-2.5 text-[14px] transition ${
               active
-                ? "bg-white/[0.08] font-medium text-nav-foreground"
-                : "text-nav-muted hover:bg-white/[0.05] hover:text-nav-foreground"
+                ? "bg-accent/10 font-medium text-foreground"
+                : "text-nav-muted hover:bg-foreground/5 hover:text-nav-foreground"
             }`}
           >
             <Icon size={18} strokeWidth={1.75} className={active ? "text-accent" : ""} />

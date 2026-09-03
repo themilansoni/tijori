@@ -1,42 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  /* ---- Palette ---- */
-  --ink: #171717;
-  --ivory: #f7f4ec;
-  --white: #ffffff;
-  --gold: #b8954a;
-  --gold-soft: #d9c08f;
-  --sage: #5f7358;
-  --muted-red: #a15b5b;
-  --slate: #6b6b67;
+  /* ---- Neutral overlay/scrim constant (theme-independent) ---- */
+  --scrim: #18181b;
 
-  /* ---- Semantic tokens ---- */
-  --background: var(--ivory);
-  --surface: var(--white);
-  --surface-2: #fbf9f3;
-  --foreground: var(--ink);
-  --muted: var(--slate);
-  --border: rgba(23, 23, 23, 0.1);
-  --border-strong: rgba(23, 23, 23, 0.16);
+  /* ---- Semantic tokens (light) ---- */
+  --background: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --foreground: #18181b;
+  --muted: #71717a;
+  --border: rgba(24, 24, 27, 0.1);
+  --border-strong: rgba(24, 24, 27, 0.18);
 
-  --accent: var(--gold);
-  --accent-foreground: var(--ink);
-  --success: var(--sage);
-  --danger: var(--muted-red);
+  --accent: #4f46e5;
+  --accent-foreground: #ffffff;
+  --success: #16a34a;
+  --danger: #dc2626;
 
-  --nav-bg: var(--ink);
-  --nav-foreground: #eae6da;
-  --nav-muted: #9c988a;
-  --nav-border: rgba(255, 255, 255, 0.08);
+  --nav-bg: var(--surface-2);
+  --nav-foreground: var(--foreground);
+  --nav-muted: var(--muted);
+  --nav-border: var(--border);
 
   /* ---- Shape & elevation ---- */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
-  --shadow-sm: 0 1px 2px rgba(23, 23, 23, 0.05);
-  --shadow-md: 0 8px 24px rgba(23, 23, 23, 0.07);
-  --shadow-lg: 0 20px 48px rgba(23, 23, 23, 0.10);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.12);
+}
+
+:root.dark {
+  --background: #09090b;
+  --surface: #18181b;
+  --surface-2: #212124;
+  --foreground: #fafafa;
+  --muted: #a1a1aa;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  --accent: #818cf8;
+  --accent-foreground: #0b0b0f;
+  --success: #4ade80;
+  --danger: #f87171;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.55);
 }
 
 @theme inline {
@@ -51,14 +63,12 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-success: var(--success);
   --color-danger: var(--danger);
-  --color-ink: var(--ink);
-  --color-gold: var(--gold);
-  --color-gold-soft: var(--gold-soft);
+  --color-scrim: var(--scrim);
   --color-nav-bg: var(--nav-bg);
   --color-nav-foreground: var(--nav-foreground);
   --color-nav-muted: var(--nav-muted);
   --color-nav-border: var(--nav-border);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-geist-sans);
 }
 
 body {
@@ -70,12 +80,16 @@ body {
  * Native <select>/<option> contrast fix.
  * Styling a <select>'s background/color does NOT propagate into the browser's
  * native dropdown popup — without this, options can render unreadable
- * (e.g. white-on-white) in Chrome/Edge. color-scheme tells the browser to draw
- * native form-control chrome (popup, arrow, scrollbar) to match this light
- * theme; explicit option colors are the belt-and-suspenders fallback.
+ * (e.g. white-on-white, or black-on-black in dark mode) in Chrome/Edge.
+ * color-scheme tells the browser to draw native form-control chrome (popup,
+ * arrow, scrollbar) to match the active theme; explicit option colors are
+ * the belt-and-suspenders fallback.
  */
 select {
   color-scheme: light;
+}
+:root.dark select {
+  color-scheme: dark;
 }
 option {
   background-color: var(--surface);
@@ -83,6 +97,6 @@ option {
 }
 
 ::selection {
-  background: var(--gold-soft);
-  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--foreground);
 }

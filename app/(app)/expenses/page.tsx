@@ -156,7 +156,7 @@ export default async function ExpensesPage({
                     {fmtCurrency(c.amount)} · {c.percent.toFixed(0)}%
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-ink/8">
+                <div className="mt-1 h-1.5 rounded-full bg-foreground/8">
                   <div
                     className="h-full rounded-full bg-muted/40"
                     style={{ width: `${Math.min(c.percent, 100)}%` }}

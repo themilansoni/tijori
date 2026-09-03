@@ -216,7 +216,7 @@ export default async function DashboardPage({
                       {fmtCurrency(c.amount)} · {c.percent.toFixed(0)}%
                     </span>
                   </div>
-                  <div className="mt-1 h-1 rounded-full bg-ink/8">
+                  <div className="mt-1 h-1 rounded-full bg-foreground/8">
                     <div className="h-full rounded-full bg-foreground/60" style={{ width: `${Math.min(c.percent, 100)}%` }} />
                   </div>
                 </div>
@@ -280,7 +280,7 @@ export default async function DashboardPage({
                     {fmtCurrency(s.spent)} / {fmtCurrency(s.budget.amount)}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-ink/8">
+                <div className="mt-1 h-1.5 rounded-full bg-foreground/8">
                   <div
                     className={`h-full rounded-full ${s.isOverBudget ? "bg-danger" : "bg-success"}`}
                     style={{ width: `${Math.min(s.usedPercent, 100)}%` }}

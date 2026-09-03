@@ -142,7 +142,7 @@ export function TransactionForm({
             onChange={(e) => setNewCategoryName(e.target.value)}
             placeholder={type === "income" ? "e.g. Bonus" : "e.g. Gym"}
             autoFocus
-            className="mt-2 w-full rounded-[9px] border border-border bg-surface px-[13px] py-2.5 text-[14px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(184,149,74,0.16)]"
+            className="mt-2 w-full rounded-[9px] border border-border bg-surface px-[13px] py-2.5 text-[14px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(79,70,229,0.16)]"
           />
           {categoryError && <p className="mt-2 text-[12px] text-danger">{categoryError}</p>}
           <div className="mt-2.5 flex gap-2">

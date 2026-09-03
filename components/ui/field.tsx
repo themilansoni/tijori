@@ -9,7 +9,7 @@ export function Field({
       </span>
       <input
         {...props}
-        className="mt-1.5 w-full rounded-[10px] border border-border bg-surface-2 px-[14px] py-3 text-[14.5px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_rgba(184,149,74,0.16)]"
+        className="mt-1.5 w-full rounded-[10px] border border-border bg-surface-2 px-[14px] py-3 text-[14.5px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_rgba(79,70,229,0.16)]"
       />
     </label>
   );
@@ -27,7 +27,7 @@ export function SelectField({
       </span>
       <select
         {...props}
-        className="mt-1.5 w-full cursor-pointer rounded-[10px] border border-border bg-surface-2 px-[14px] py-3 text-[14.5px] text-foreground transition hover:border-border-strong focus:outline-none focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_rgba(184,149,74,0.16)]"
+        className="mt-1.5 w-full cursor-pointer rounded-[10px] border border-border bg-surface-2 px-[14px] py-3 text-[14.5px] text-foreground transition hover:border-border-strong focus:outline-none focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_rgba(79,70,229,0.16)]"
       >
         {children}
       </select>
@@ -46,7 +46,7 @@ export function TextareaField({
       </span>
       <textarea
         {...props}
-        className="mt-1.5 w-full rounded-[10px] border border-border bg-surface-2 px-[14px] py-3 text-[14.5px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_rgba(184,149,74,0.16)]"
+        className="mt-1.5 w-full rounded-[10px] border border-border bg-surface-2 px-[14px] py-3 text-[14.5px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_rgba(79,70,229,0.16)]"
       />
     </label>
   );
