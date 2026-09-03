@@ -12,12 +12,12 @@ const PERMISSION_ERROR = "You don't have permission to do this.";
 export type CreateRoleResult = { error: string } | { ok: true; role: Role };
 
 export async function createRole(formData: FormData): Promise<CreateRoleResult> {
-  if (!(await can("roles", "create"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("roles", "create", supabase))) return { error: PERMISSION_ERROR };
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Role name is required." };
 
-  const supabase = await createClient();
   const { data, error } = await supabase
     .from("roles")
     .insert({ name, is_system: false })
@@ -41,9 +41,9 @@ export async function createRole(formData: FormData): Promise<CreateRoleResult> 
 }
 
 export async function deleteRole(id: string): Promise<ActionResult> {
-  if (!(await can("roles", "delete"))) return { error: PERMISSION_ERROR };
-
   const supabase = await createClient();
+  if (!(await can("roles", "delete", supabase))) return { error: PERMISSION_ERROR };
+
   const { data: existing } = await supabase.from("roles").select("name, is_system").eq("id", id).single();
   if (existing?.is_system) return { error: "System roles can't be deleted." };
 
@@ -74,9 +74,8 @@ export async function setRolePermission(
   permissionId: string,
   grant: boolean
 ): Promise<ActionResult> {
-  if (!(await can("roles", "edit"))) return { error: PERMISSION_ERROR };
-
   const supabase = await createClient();
+  if (!(await can("roles", "edit", supabase))) return { error: PERMISSION_ERROR };
 
   if (grant) {
     const { error } = await supabase

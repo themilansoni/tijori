@@ -17,7 +17,8 @@ function generateTempPassword() {
 export type CreateUserResult = { error: string } | { ok: true; email: string; tempPassword: string };
 
 export async function createUser(formData: FormData): Promise<CreateUserResult> {
-  if (!(await can("users", "create"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("users", "create", supabase))) return { error: PERMISSION_ERROR };
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const fullName = String(formData.get("full_name") ?? "").trim();
@@ -26,7 +27,6 @@ export async function createUser(formData: FormData): Promise<CreateUserResult> 
   if (!email) return { error: "Email is required." };
   if (!roleId) return { error: "Please choose a role." };
 
-  const supabase = await createClient();
   const { data: role } = await supabase.from("roles").select("id").eq("id", roleId).maybeSingle();
   if (!role) return { error: "Invalid role." };
 
@@ -62,7 +62,8 @@ export async function createUser(formData: FormData): Promise<CreateUserResult> 
 }
 
 export async function updateUserProfile(formData: FormData): Promise<ActionResult> {
-  if (!(await can("users", "edit"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("users", "edit", supabase))) return { error: PERMISSION_ERROR };
 
   const id = String(formData.get("id") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
@@ -91,9 +92,9 @@ export async function updateUserProfile(formData: FormData): Promise<ActionResul
 }
 
 export async function setUserActive(id: string, isActive: boolean): Promise<ActionResult> {
-  if (!(await can("users", "edit"))) return { error: PERMISSION_ERROR };
-
   const supabase = await createClient();
+  if (!(await can("users", "edit", supabase))) return { error: PERMISSION_ERROR };
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -123,7 +124,8 @@ export async function setUserActive(id: string, isActive: boolean): Promise<Acti
 export type ResetPasswordResult = { error: string } | { ok: true; tempPassword: string };
 
 export async function resetUserPassword(id: string): Promise<ResetPasswordResult> {
-  if (!(await can("users", "edit"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("users", "edit", supabase))) return { error: PERMISSION_ERROR };
 
   const tempPassword = generateTempPassword();
   const admin = createAdminClient();

@@ -33,7 +33,8 @@ async function isDuplicateName(
 }
 
 export async function createCategory(formData: FormData): Promise<CreateCategoryResult> {
-  if (!(await can("categories", "create"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("categories", "create", supabase))) return { error: PERMISSION_ERROR };
 
   const name = String(formData.get("name") ?? "").trim();
   const type = String(formData.get("type") ?? "");
@@ -41,7 +42,6 @@ export async function createCategory(formData: FormData): Promise<CreateCategory
   if (!name) return { error: "Category name is required." };
   if (type !== "expense" && type !== "income") return { error: "Invalid category type." };
 
-  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -77,7 +77,8 @@ export async function createCategory(formData: FormData): Promise<CreateCategory
 }
 
 export async function updateCategory(formData: FormData): Promise<ActionResult> {
-  if (!(await can("categories", "edit"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("categories", "edit", supabase))) return { error: PERMISSION_ERROR };
 
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -85,7 +86,6 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
   if (!id) return { error: "Missing category id." };
   if (!name) return { error: "Category name is required." };
 
-  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -123,9 +123,9 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
 }
 
 export async function setCategoryActive(id: string, isActive: boolean): Promise<ActionResult> {
-  if (!(await can("categories", "edit"))) return { error: PERMISSION_ERROR };
-
   const supabase = await createClient();
+  if (!(await can("categories", "edit", supabase))) return { error: PERMISSION_ERROR };
+
   const { data: existing } = await supabase
     .from("categories")
     .select("name")
@@ -153,9 +153,9 @@ export async function setCategoryActive(id: string, isActive: boolean): Promise<
 }
 
 export async function deleteCategory(id: string): Promise<ActionResult> {
-  if (!(await can("categories", "delete"))) return { error: PERMISSION_ERROR };
-
   const supabase = await createClient();
+  if (!(await can("categories", "delete", supabase))) return { error: PERMISSION_ERROR };
+
   const { data: existing } = await supabase
     .from("categories")
     .select("name")

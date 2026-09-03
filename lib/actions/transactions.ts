@@ -44,12 +44,12 @@ export async function createTransaction(
   type: "expense" | "income",
   formData: FormData
 ): Promise<ActionResult> {
-  if (!(await can(moduleFor(type), "create"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can(moduleFor(type), "create", supabase))) return { error: PERMISSION_ERROR };
 
   const parsed = parseTransactionForm(formData);
   if ("error" in parsed) return { error: parsed.error };
 
-  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -92,7 +92,7 @@ export async function updateTransaction(formData: FormData): Promise<ActionResul
     .single();
   if (!existing) return { error: "Transaction not found." };
 
-  if (!(await can(moduleFor(existing.type), "edit"))) return { error: PERMISSION_ERROR };
+  if (!(await can(moduleFor(existing.type), "edit", supabase))) return { error: PERMISSION_ERROR };
 
   const { error } = await supabase.from("transactions").update(parsed.data).eq("id", id);
 
@@ -121,7 +121,7 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
     .single();
   if (!existing) return { error: "Transaction not found." };
 
-  if (!(await can(moduleFor(existing.type), "delete"))) return { error: PERMISSION_ERROR };
+  if (!(await can(moduleFor(existing.type), "delete", supabase))) return { error: PERMISSION_ERROR };
 
   const { error } = await supabase.from("transactions").delete().eq("id", id);
 

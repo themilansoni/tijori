@@ -9,7 +9,8 @@ import type { ActionResult } from "./categories";
 const PERMISSION_ERROR = "You don't have permission to do this.";
 
 export async function createBudget(formData: FormData): Promise<ActionResult> {
-  if (!(await can("budgets", "create"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("budgets", "create", supabase))) return { error: PERMISSION_ERROR };
 
   const category_id = String(formData.get("category_id") ?? "");
   const amount = Number(formData.get("amount"));
@@ -22,7 +23,6 @@ export async function createBudget(formData: FormData): Promise<ActionResult> {
     return { error: "Invalid budget period." };
   }
 
-  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -55,7 +55,8 @@ export async function createBudget(formData: FormData): Promise<ActionResult> {
 }
 
 export async function updateBudget(formData: FormData): Promise<ActionResult> {
-  if (!(await can("budgets", "edit"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("budgets", "edit", supabase))) return { error: PERMISSION_ERROR };
 
   const id = String(formData.get("id") ?? "");
   const amount = Number(formData.get("amount"));
@@ -67,7 +68,6 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
     return { error: "Invalid budget period." };
   }
 
-  const supabase = await createClient();
   const { error } = await supabase.from("budgets").update({ amount, period }).eq("id", id);
 
   if (error) return { error: error.message };
@@ -85,9 +85,9 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
 }
 
 export async function setBudgetActive(id: string, isActive: boolean): Promise<ActionResult> {
-  if (!(await can("budgets", "edit"))) return { error: PERMISSION_ERROR };
-
   const supabase = await createClient();
+  if (!(await can("budgets", "edit", supabase))) return { error: PERMISSION_ERROR };
+
   const { error } = await supabase.from("budgets").update({ is_active: isActive }).eq("id", id);
 
   if (error) return { error: error.message };
@@ -105,9 +105,9 @@ export async function setBudgetActive(id: string, isActive: boolean): Promise<Ac
 }
 
 export async function deleteBudget(id: string): Promise<ActionResult> {
-  if (!(await can("budgets", "delete"))) return { error: PERMISSION_ERROR };
-
   const supabase = await createClient();
+  if (!(await can("budgets", "delete", supabase))) return { error: PERMISSION_ERROR };
+
   const { error } = await supabase.from("budgets").delete().eq("id", id);
 
   if (error) return { error: error.message };

@@ -10,7 +10,9 @@ import { UsersTabs } from "@/components/users/users-tabs";
 import type { Permission, Profile, Role } from "@/lib/types";
 
 export default async function UsersPage() {
-  if (!(await can("users", "view"))) {
+  const supabase = await createClient();
+
+  if (!(await can("users", "view", supabase))) {
     return (
       <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted">
         You don&apos;t have permission to view this page.
@@ -18,17 +20,17 @@ export default async function UsersPage() {
     );
   }
 
-  const supabase = await createClient();
   const {
     data: { user: currentUser },
   } = await supabase.auth.getUser();
 
-  const [{ data: profilesRaw }, { data: rolesRaw }, { data: permissionsRaw }, { data: rolePermsRaw }] =
+  const [{ data: profilesRaw }, { data: rolesRaw }, { data: permissionsRaw }, { data: rolePermsRaw }, canCreate] =
     await Promise.all([
       supabase.from("profiles").select("*").order("created_at"),
       supabase.from("roles").select("*").order("created_at"),
       supabase.from("permissions").select("*").order("module"),
       supabase.from("role_permissions").select("role_id, permission_id"),
+      can("users", "create", supabase),
     ]);
 
   const profiles = (profilesRaw ?? []) as Profile[];
@@ -41,10 +43,7 @@ export default async function UsersPage() {
   }
 
   const admin = createAdminClient();
-  const [{ data: listed }, canCreate] = await Promise.all([
-    admin.auth.admin.listUsers({ perPage: 200 }),
-    can("users", "create"),
-  ]);
+  const { data: listed } = await admin.auth.admin.listUsers({ perPage: 200 });
   const emailById = new Map((listed?.users ?? []).map((u) => [u.id, u.email ?? ""]));
 
   return (
@@ -64,17 +63,23 @@ export default async function UsersPage() {
 
       <UsersTabs
         people={
-          <div className="grid gap-3 md:grid-cols-2">
-            {profiles.map((p) => (
-              <UserRow
-                key={p.id}
-                profile={p}
-                email={emailById.get(p.id) ?? p.full_name ?? p.id}
-                roles={roles}
-                isSelf={p.id === currentUser?.id}
-              />
-            ))}
-          </div>
+          profiles.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted">
+              No users found.
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {profiles.map((p) => (
+                <UserRow
+                  key={p.id}
+                  profile={p}
+                  email={emailById.get(p.id) ?? p.full_name ?? p.id}
+                  roles={roles}
+                  isSelf={p.id === currentUser?.id}
+                />
+              ))}
+            </div>
+          )
         }
         roles={<RolesPanel roles={roles} permissions={permissions} grantedByRole={grantedByRole} />}
       />

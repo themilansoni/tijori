@@ -12,7 +12,8 @@ const PERMISSION_ERROR = "You don't have permission to do this.";
 export type CreateAccountResult = { error: string } | { ok: true; account: Account };
 
 export async function createAccount(formData: FormData): Promise<CreateAccountResult> {
-  if (!(await can("accounts", "create"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("accounts", "create", supabase))) return { error: PERMISSION_ERROR };
 
   const name = String(formData.get("name") ?? "").trim();
   const type = String(formData.get("type") ?? "");
@@ -25,7 +26,6 @@ export async function createAccount(formData: FormData): Promise<CreateAccountRe
   }
   if (!Number.isFinite(opening_balance)) return { error: "Opening balance must be a number." };
 
-  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -53,7 +53,8 @@ export async function createAccount(formData: FormData): Promise<CreateAccountRe
 }
 
 export async function updateAccount(formData: FormData): Promise<ActionResult> {
-  if (!(await can("accounts", "edit"))) return { error: PERMISSION_ERROR };
+  const supabase = await createClient();
+  if (!(await can("accounts", "edit", supabase))) return { error: PERMISSION_ERROR };
 
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -65,7 +66,6 @@ export async function updateAccount(formData: FormData): Promise<ActionResult> {
   if (!name) return { error: "Account name is required." };
   if (!Number.isFinite(opening_balance)) return { error: "Opening balance must be a number." };
 
-  const supabase = await createClient();
   const { error } = await supabase
     .from("accounts")
     .update({ name, type, opening_balance, currency })
@@ -87,9 +87,9 @@ export async function updateAccount(formData: FormData): Promise<ActionResult> {
 }
 
 export async function setAccountActive(id: string, isActive: boolean): Promise<ActionResult> {
-  if (!(await can("accounts", "edit"))) return { error: PERMISSION_ERROR };
-
   const supabase = await createClient();
+  if (!(await can("accounts", "edit", supabase))) return { error: PERMISSION_ERROR };
+
   const { data: existing } = await supabase.from("accounts").select("name").eq("id", id).single();
 
   const { error } = await supabase.from("accounts").update({ is_active: isActive }).eq("id", id);
@@ -108,9 +108,9 @@ export async function setAccountActive(id: string, isActive: boolean): Promise<A
 }
 
 export async function deleteAccount(id: string): Promise<ActionResult> {
-  if (!(await can("accounts", "delete"))) return { error: PERMISSION_ERROR };
-
   const supabase = await createClient();
+  if (!(await can("accounts", "delete", supabase))) return { error: PERMISSION_ERROR };
+
   const { data: existing } = await supabase.from("accounts").select("name").eq("id", id).single();
 
   const { count } = await supabase

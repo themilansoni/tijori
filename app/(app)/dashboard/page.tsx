@@ -35,7 +35,7 @@ export default async function DashboardPage({
 
   const [allowed, { data: txRaw }, { data: categoriesRaw }, { data: accountsRaw }, { data: budgetsRaw }] =
     await Promise.all([
-      can("dashboard", "view"),
+      can("dashboard", "view", supabase),
       supabase.from("transactions").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*"),
       supabase.from("accounts").select("*").order("name"),

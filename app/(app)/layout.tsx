@@ -30,7 +30,7 @@ export default async function AppLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const canViewUsers = await can("users", "view");
+  const canViewUsers = await can("users", "view", supabase);
   const hiddenHrefs = canViewUsers ? [] : ["/users"];
 
   return (
