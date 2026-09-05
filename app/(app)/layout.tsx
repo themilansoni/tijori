@@ -2,7 +2,7 @@ import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/actions/auth";
 import { can } from "@/lib/authorize";
-import { TijoriWordmark } from "@/components/ui/tijori-wordmark";
+import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { MobileNav } from "@/components/nav/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -37,7 +37,7 @@ export default async function AppLayout({
     <div className="flex min-h-screen flex-col bg-background text-foreground lg:flex-row">
       <aside className="hidden w-64 shrink-0 flex-col bg-nav-bg px-4 py-6 text-nav-foreground lg:sticky lg:top-0 lg:flex lg:h-screen lg:border-r lg:border-nav-border">
         <div className="px-2">
-          <TijoriWordmark className="text-[19px]" />
+          <TijoriLogo height={22} />
         </div>
 
         <div className="mt-8 flex-1">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import { TijoriWordmark } from "@/components/ui/tijori-wordmark";
+import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -37,7 +37,7 @@ export function MobileNav({
           >
             <Menu size={22} strokeWidth={1.75} />
           </button>
-          <TijoriWordmark className="text-[17px]" />
+          <TijoriLogo height={19} />
         </div>
       </header>
 
@@ -50,7 +50,7 @@ export function MobileNav({
           />
           <div className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col bg-nav-bg px-5 py-5 text-nav-foreground shadow-[var(--shadow-lg)]">
             <div className="flex items-center justify-between">
-              <TijoriWordmark className="text-[17px]" />
+              <TijoriLogo height={19} />
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"

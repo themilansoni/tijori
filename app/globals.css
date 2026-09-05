@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Tailwind's dark: variant should follow next-themes' class on <html>,
+   not the OS-level prefers-color-scheme media query — otherwise dark:
+   utilities disagree with the app's own light/dark/system toggle
+   whenever the OS preference differs from what the user picked. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   /* ---- Neutral overlay/scrim constant (theme-independent) ---- */
   --scrim: #18181b;

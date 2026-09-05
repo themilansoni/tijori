@@ -1,4 +1,4 @@
-import { TijoriWordmark } from "@/components/ui/tijori-wordmark";
+import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { SafeSketch } from "@/components/ui/safe-sketch";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -20,25 +20,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           aria-hidden="true"
         />
 
-        <TijoriWordmark className="relative text-[17px] text-white" />
+        <TijoriLogo variant="white" height={20} className="relative self-start" />
 
         <div className="relative mx-auto w-full max-w-[280px] text-white/85">
           <SafeSketch className="w-full" />
         </div>
 
-        <div className="relative">
-          <div className="text-[22px] font-semibold tracking-tight text-white">
-            Your money. Organized. Protected.
-          </div>
-          <p className="mt-2 max-w-[320px] text-[13.5px] text-white/55">
-            Expenses, income, budgets, and investments — one clear picture, kept private to you.
-          </p>
-        </div>
+        <TijoriLogo part="full" variant="white" height={68} className="relative self-start" />
       </div>
 
       <div className="flex min-h-screen flex-col justify-center px-6 py-14 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-sm">
-          <TijoriWordmark className="mb-10 block text-[20px] text-foreground lg:mb-14" />
+          <TijoriLogo height={26} className="mb-10 lg:mb-14" />
 
           {children}
         </div>
