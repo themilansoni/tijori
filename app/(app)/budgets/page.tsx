@@ -3,7 +3,6 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { BudgetForm } from "@/components/forms/budget-form";
 import { BudgetRow } from "./budget-row";
-import { TijoriMark } from "@/components/ui/tijori-mark";
 import { budgetStatus, fmtCurrency } from "@/lib/calculations";
 import type { Budget, Category, Transaction } from "@/lib/types";
 
@@ -81,7 +80,6 @@ export default async function BudgetsPage() {
       <div className="mt-6">
         {statuses.length === 0 ? (
           <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-12 text-center">
-            <TijoriMark variant="bare" tone="ink" size={30} className="mx-auto opacity-40" />
             <p className="mt-4 font-medium text-foreground">No budgets configured</p>
             <p className="mt-1 text-[13.5px] text-muted">
               Create a budget to start tracking your spending limits.

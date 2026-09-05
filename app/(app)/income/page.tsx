@@ -7,7 +7,6 @@ import { SpendBarChart } from "@/components/charts/spend-bar-chart";
 import { TransactionForm } from "@/components/forms/transaction-form";
 import { FiltersBar, type SortKey } from "@/components/transactions/filters-bar";
 import { IncomeList } from "./income-list";
-import { TijoriMark } from "@/components/ui/tijori-mark";
 import {
   getPeriodRange,
   sumAmount,
@@ -207,7 +206,6 @@ export default async function IncomePage({
       <div className="mt-3">
         {periodTransactions.length === 0 ? (
           <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-12 text-center">
-            <TijoriMark variant="bare" tone="ink" size={30} className="mx-auto opacity-40" />
             <p className="mt-4 font-medium text-foreground">No income yet</p>
             <p className="mt-1 text-[13.5px] text-muted">
               Record your earnings for {periodLabel.toLowerCase()}.

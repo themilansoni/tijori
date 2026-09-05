@@ -8,7 +8,6 @@ import { ManualHoldingForm } from "@/components/forms/manual-holding-form";
 import { HoldingsTable } from "./holdings-table";
 import { BrokerConnectionCard } from "./broker-connection-card";
 import { AllocationBreakdown } from "./allocation-breakdown";
-import { TijoriMark } from "@/components/ui/tijori-mark";
 import { calculateTotalPortfolioValue, calculatePortfolioAllocation, fmtCurrency } from "@/lib/calculations";
 import type { Account, BrokerConnection, InvestmentHolding } from "@/lib/types";
 
@@ -96,7 +95,6 @@ export default async function InvestmentsPage({
       <div className="mt-6">
         {holdings.length === 0 ? (
           <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-12 text-center">
-            <TijoriMark variant="bare" tone="ink" size={30} className="mx-auto opacity-40" />
             <p className="mt-4 font-medium text-foreground">No investments yet</p>
             <p className="mt-1 text-[13.5px] text-muted">
               Connect Zerodha above, or add a stock, fund, or other investment by hand.

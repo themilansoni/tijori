@@ -1,4 +1,4 @@
-import { TijoriMark } from "@/components/ui/tijori-mark";
+import { TijoriWordmark } from "@/components/ui/tijori-wordmark";
 import { SafeSketch } from "@/components/ui/safe-sketch";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -20,10 +20,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           aria-hidden="true"
         />
 
-        <div className="relative flex items-center gap-2.5">
-          <TijoriMark variant="bare" tone="accent" size={26} />
-          <span className="text-[15px] font-semibold tracking-tight text-white">Tijori</span>
-        </div>
+        <TijoriWordmark className="relative text-[17px] text-white" />
 
         <div className="relative mx-auto w-full max-w-[280px] text-white/85">
           <SafeSketch className="w-full" />
@@ -41,10 +38,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       <div className="flex min-h-screen flex-col justify-center px-6 py-14 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-sm">
-          <div className="mb-10 flex items-center gap-2.5 lg:mb-14">
-            <TijoriMark size={30} className="rounded-[8px]" />
-            <span className="text-[16px] font-semibold tracking-tight text-foreground">Tijori</span>
-          </div>
+          <TijoriWordmark className="mb-10 block text-[20px] text-foreground lg:mb-14" />
 
           {children}
         </div>
