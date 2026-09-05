@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import type { PermAction } from "@/lib/types";
+
+export type { PermAction };
 
 export type Module =
   | "dashboard"
@@ -12,8 +15,6 @@ export type Module =
   | "users"
   | "roles"
   | "settings";
-
-export type PermAction = "view" | "create" | "edit" | "delete";
 
 /**
  * Server-side permission check. Calls the `authorize()` SQL function, which

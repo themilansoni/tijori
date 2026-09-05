@@ -5,7 +5,7 @@ import { createRole, deleteRole, setRolePermission } from "@/lib/actions/roles";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import type { PermAction, Permission, Role } from "@/lib/types";
 
-const ACTIONS: PermAction[] = ["view", "create", "edit", "delete"];
+const ACTIONS: PermAction[] = ["view", "create", "edit", "delete", "sync", "connect"];
 
 const MODULE_ORDER = [
   "dashboard",

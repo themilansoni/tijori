@@ -88,7 +88,7 @@ export type Role = {
   updated_at: string;
 };
 
-export type PermAction = "view" | "create" | "edit" | "delete";
+export type PermAction = "view" | "create" | "edit" | "delete" | "sync" | "connect";
 
 export type Permission = {
   id: string;
@@ -96,52 +96,78 @@ export type Permission = {
   action: PermAction;
 };
 
-export type InvestmentType =
+export type AssetType =
+  | "stock"
+  | "etf"
   | "mutual_fund"
-  | "stocks"
-  | "fixed_deposit"
-  | "ppf"
-  | "epf"
+  | "bond"
   | "gold"
-  | "real_estate"
-  | "crypto"
-  | "bonds"
+  | "fixed_deposit"
   | "other";
 
-export const INVESTMENT_TYPES: { value: InvestmentType; label: string }[] = [
+export const ASSET_TYPES: { value: AssetType; label: string }[] = [
+  { value: "stock", label: "Stock" },
+  { value: "etf", label: "ETF" },
   { value: "mutual_fund", label: "Mutual Fund" },
-  { value: "stocks", label: "Stocks" },
-  { value: "fixed_deposit", label: "Fixed Deposit" },
-  { value: "ppf", label: "PPF" },
-  { value: "epf", label: "EPF" },
+  { value: "bond", label: "Bond" },
   { value: "gold", label: "Gold" },
-  { value: "real_estate", label: "Real Estate" },
-  { value: "crypto", label: "Crypto" },
-  { value: "bonds", label: "Bonds" },
+  { value: "fixed_deposit", label: "Fixed Deposit" },
   { value: "other", label: "Other" },
 ];
 
-export type Investment = {
+export type InvestmentSource = "manual" | "zerodha";
+
+export type InvestmentHolding = {
   id: string;
   user_id: string;
-  name: string;
-  type: InvestmentType;
+  broker_connection_id: string | null;
+  source: InvestmentSource;
+  instrument_name: string;
+  asset_type: AssetType;
+  symbol: string | null;
+  isin: string | null;
+  exchange: string | null;
+  quantity: number;
+  average_buy_price: number;
+  current_price: number | null;
+  price_source: "manual" | "zerodha";
+  last_price_update: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
 };
 
-export type InvestmentTxType = "invest" | "withdraw";
+export type InvestmentTxType = "buy" | "sell" | "dividend" | "bonus" | "split";
 
 export type InvestmentTransaction = {
   id: string;
   user_id: string;
-  investment_id: string;
+  holding_id: string;
   type: InvestmentTxType;
-  amount: number;
+  quantity: number | null;
+  price: number | null;
+  charges: number;
+  total_amount: number;
   transaction_date: string;
   account_id: string | null;
   note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BrokerName = "zerodha" | "upstox";
+
+export type BrokerConnectionStatus = "connected" | "disconnected" | "expired" | "error";
+
+export type BrokerConnection = {
+  id: string;
+  user_id: string;
+  broker: BrokerName;
+  status: BrokerConnectionStatus;
+  broker_user_id: string | null;
+  connected_at: string | null;
+  last_synced_at: string | null;
+  last_error: string | null;
   created_at: string;
   updated_at: string;
 };

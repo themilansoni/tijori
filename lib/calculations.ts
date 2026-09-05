@@ -17,11 +17,11 @@ import {
 } from "date-fns";
 import type {
   Account,
+  AssetType,
   Budget,
   BudgetPeriod,
   Category,
-  Investment,
-  InvestmentTransaction,
+  InvestmentHolding,
   PeriodKey,
   Transaction,
 } from "./types";
@@ -259,49 +259,93 @@ export function fmtCurrency(n: number): string {
   return `${sign}₹${Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 }
 
-/** Net invested = all "invest" contributions minus all "withdraw" ones, for one investment. */
-export function investmentNetInvested(
-  investmentId: string,
-  allInvestmentTransactions: InvestmentTransaction[]
-): number {
-  return allInvestmentTransactions
-    .filter((t) => t.investment_id === investmentId)
-    .reduce((sum, t) => sum + (t.type === "invest" ? Number(t.amount) : -Number(t.amount)), 0);
+/**
+ * Centralized investment-portfolio math — every screen (list, dashboard,
+ * detail) reads through these instead of computing invested/market value
+ * inline, so the definition of "P&L" only lives in one place.
+ */
+export function calculateInvestedAmount(holding: InvestmentHolding): number {
+  return Number(holding.quantity) * Number(holding.average_buy_price);
 }
 
-export type InvestmentTotals = {
+/** Market value is null (not zero) when there's no price yet — never invent a number. */
+export function calculateMarketValue(holding: InvestmentHolding): number | null {
+  if (holding.current_price == null) return null;
+  return Number(holding.quantity) * Number(holding.current_price);
+}
+
+export function calculateUnrealizedPnL(holding: InvestmentHolding): number | null {
+  const marketValue = calculateMarketValue(holding);
+  if (marketValue == null) return null;
+  return marketValue - calculateInvestedAmount(holding);
+}
+
+export function calculatePnLPercentage(holding: InvestmentHolding): number | null {
+  const pnl = calculateUnrealizedPnL(holding);
+  const invested = calculateInvestedAmount(holding);
+  if (pnl == null || invested <= 0) return null;
+  return (pnl / invested) * 100;
+}
+
+export type PortfolioTotals = {
   totalInvested: number;
-  totalWithdrawn: number;
-  netInvested: number;
+  /** Sum of market value across holdings that have a current price; holdings with no price yet are excluded. */
+  currentValue: number;
+  /** Invested amount for only the priced holdings — the fair comparison base for `unrealizedPnL`. */
+  pricedInvested: number;
+  unrealizedPnL: number;
+  unrealizedPnLPercent: number;
+  /** How many active holdings have no current price yet (so currentValue understates the true total). */
+  unpricedCount: number;
 };
 
-/** Portfolio-wide totals across every investment, from its full contribution history. */
-export function investmentPortfolioTotals(
-  allInvestmentTransactions: InvestmentTransaction[]
-): InvestmentTotals {
-  let totalInvested = 0;
-  let totalWithdrawn = 0;
-  for (const t of allInvestmentTransactions) {
-    if (t.type === "invest") totalInvested += Number(t.amount);
-    else totalWithdrawn += Number(t.amount);
+export function calculateTotalPortfolioValue(holdings: InvestmentHolding[]): PortfolioTotals {
+  const active = holdings.filter((h) => h.is_active);
+  const totalInvested = active.reduce((sum, h) => sum + calculateInvestedAmount(h), 0);
+
+  let currentValue = 0;
+  let pricedInvested = 0;
+  let unpricedCount = 0;
+
+  for (const h of active) {
+    const marketValue = calculateMarketValue(h);
+    if (marketValue == null) {
+      unpricedCount += 1;
+      continue;
+    }
+    currentValue += marketValue;
+    pricedInvested += calculateInvestedAmount(h);
   }
-  return { totalInvested, totalWithdrawn, netInvested: totalInvested - totalWithdrawn };
+
+  const unrealizedPnL = currentValue - pricedInvested;
+  return {
+    totalInvested,
+    currentValue,
+    pricedInvested,
+    unrealizedPnL,
+    unrealizedPnLPercent: pricedInvested > 0 ? (unrealizedPnL / pricedInvested) * 100 : 0,
+    unpricedCount,
+  };
 }
 
-export type InvestmentBreakdown = { investment: Investment; amount: number; percent: number };
+export type AssetAllocation = { assetType: AssetType; value: number; percent: number };
 
-/** Net-invested amount per investment, sorted largest first — for a portfolio breakdown view. */
-export function investmentBreakdown(
-  investments: Investment[],
-  allInvestmentTransactions: InvestmentTransaction[]
-): InvestmentBreakdown[] {
-  const { netInvested: total } = investmentPortfolioTotals(allInvestmentTransactions);
-  return investments
-    .map((inv) => {
-      const amount = investmentNetInvested(inv.id, allInvestmentTransactions);
-      return { investment: inv, amount, percent: total > 0 ? (amount / total) * 100 : 0 };
-    })
-    .sort((a, b) => b.amount - a.amount);
+/** Portfolio allocation by asset type, using market value where priced and invested amount as a fallback. */
+export function calculatePortfolioAllocation(holdings: InvestmentHolding[]): AssetAllocation[] {
+  const active = holdings.filter((h) => h.is_active);
+  const totals = new Map<AssetType, number>();
+  for (const h of active) {
+    const value = calculateMarketValue(h) ?? calculateInvestedAmount(h);
+    totals.set(h.asset_type, (totals.get(h.asset_type) ?? 0) + value);
+  }
+  const grandTotal = Array.from(totals.values()).reduce((a, b) => a + b, 0);
+  return Array.from(totals.entries())
+    .map(([assetType, value]) => ({
+      assetType,
+      value,
+      percent: grandTotal > 0 ? (value / grandTotal) * 100 : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
 }
 
 export function nextBudgetStartExample(period: BudgetPeriod, today: Date): Date {
