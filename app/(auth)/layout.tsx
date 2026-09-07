@@ -2,12 +2,13 @@ import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { SafeSketch } from "@/components/ui/safe-sketch";
 
 const PARTICLES = [
-  { left: "18%", size: 5, delay: "0s", duration: "9s", opacity: 0.5 },
-  { left: "32%", size: 3, delay: "2.5s", duration: "11s", opacity: 0.35 },
-  { left: "48%", size: 4, delay: "1.2s", duration: "10s", opacity: 0.45 },
-  { left: "64%", size: 3, delay: "4s", duration: "9.5s", opacity: 0.3 },
-  { left: "78%", size: 5, delay: "3s", duration: "12s", opacity: 0.4 },
-  { left: "88%", size: 3, delay: "5.5s", duration: "10.5s", opacity: 0.35 },
+  { left: "14%", size: 16, delay: "0s", duration: "3.4s", opacity: 0.55 },
+  { left: "26%", size: 12, delay: "1s", duration: "4.2s", opacity: 0.35 },
+  { left: "40%", size: 15, delay: "0.5s", duration: "3.8s", opacity: 0.5 },
+  { left: "55%", size: 12, delay: "1.6s", duration: "3.6s", opacity: 0.3 },
+  { left: "68%", size: 17, delay: "1.2s", duration: "4.6s", opacity: 0.45 },
+  { left: "80%", size: 12, delay: "2.1s", duration: "3.4s", opacity: 0.35 },
+  { left: "90%", size: 15, delay: "0.8s", duration: "4s", opacity: 0.4 },
 ];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -30,19 +31,20 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         />
 
         {PARTICLES.map((p, i) => (
-          <div
+          <span
             key={i}
-            className="auth-particle pointer-events-none absolute bottom-24 rounded-full bg-white blur-[1px]"
+            className="auth-particle pointer-events-none absolute bottom-24 font-semibold text-white"
             style={{
               left: p.left,
-              width: p.size,
-              height: p.size,
+              fontSize: p.size,
               animationDelay: p.delay,
               animationDuration: p.duration,
               ["--particle-opacity" as string]: p.opacity,
             }}
             aria-hidden="true"
-          />
+          >
+            ₹
+          </span>
         ))}
 
         <div aria-hidden="true" className="relative" />
