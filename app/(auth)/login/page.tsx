@@ -16,6 +16,11 @@ export default function LoginPage() {
       <form className="mt-8" action={formAction}>
         <Field label="Email" name="email" type="email" placeholder="you@example.com" required autoComplete="email" />
         <Field label="Password" name="password" type="password" placeholder="••••••••" required autoComplete="current-password" />
+        <p className="mt-2 text-right">
+          <Link href="/forgot-password" className="text-[12.5px] text-muted hover:text-accent">
+            Forgot password?
+          </Link>
+        </p>
         <FormError message={state?.error} />
         <SubmitButton pending={pending}>Sign in</SubmitButton>
       </form>

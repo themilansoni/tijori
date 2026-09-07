@@ -1,9 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = { error?: string } | undefined;
+export type ResetRequestState = { error?: string; success?: string } | undefined;
 
 export async function login(
   _prevState: AuthState,
@@ -65,4 +67,51 @@ export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
+}
+
+async function getOrigin() {
+  const hdrs = await headers();
+  const host = hdrs.get("host");
+  const protocol = hdrs.get("x-forwarded-proto") ?? "https";
+  return `${protocol}://${host}`;
+}
+
+/**
+ * Deliberately returns the same success message whether or not the email
+ * belongs to a real account — confirming/denying account existence here
+ * would let someone enumerate registered emails.
+ */
+export async function requestPasswordReset(
+  _prevState: ResetRequestState,
+  formData: FormData
+): Promise<ResetRequestState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) return { error: "Email is required." };
+
+  const supabase = await createClient();
+  const origin = await getOrigin();
+
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/reset-password`,
+  });
+
+  return { success: "If an account exists for that email, we've sent a password reset link." };
+}
+
+export async function updatePassword(
+  _prevState: AuthState,
+  formData: FormData
+): Promise<AuthState> {
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!password) return { error: "Password is required." };
+  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (password !== confirmPassword) return { error: "Passwords do not match." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: error.message };
+
+  redirect("/dashboard");
 }
