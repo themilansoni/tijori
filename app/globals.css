@@ -106,3 +106,43 @@ option {
   background: color-mix(in srgb, var(--accent) 35%, transparent);
   color: var(--foreground);
 }
+
+/* ---- Auth screen "living wallpaper": drifting glow, a ticking safe
+   dial, and a few slow-rising light motes. All subtle and slow —
+   ambient, not attention-seeking — and fully disabled for anyone who
+   asked the OS for reduced motion. ---- */
+@keyframes auth-glow-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(5%, -7%) scale(1.1); }
+}
+.auth-glow {
+  animation: auth-glow-drift 16s ease-in-out infinite;
+}
+
+@keyframes auth-dial-tick {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+}
+.safe-dial-needle {
+  transform-origin: 180px 176px;
+  animation: auth-dial-tick 7s ease-in-out infinite;
+}
+
+@keyframes auth-particle-float {
+  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  15% { opacity: var(--particle-opacity, 0.5); }
+  85% { opacity: var(--particle-opacity, 0.5); }
+  100% { transform: translateY(-160px) scale(1.15); opacity: 0; }
+}
+.auth-particle {
+  animation: auth-particle-float 9s ease-in infinite;
+  animation-delay: var(--particle-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-glow,
+  .safe-dial-needle,
+  .auth-particle {
+    animation: none;
+  }
+}

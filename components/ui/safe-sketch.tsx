@@ -4,7 +4,14 @@
  * line art with a subtle pencil wobble via an SVG turbulence filter, no
  * brand marks or text on the safe itself.
  */
-export function SafeSketch({ className = "" }: { className?: string }) {
+export function SafeSketch({
+  className = "",
+  animated = false,
+}: {
+  className?: string;
+  /** Gives the combination dial's needle a slow, ambient back-and-forth tick. */
+  animated?: boolean;
+}) {
   return (
     <svg viewBox="0 0 360 400" className={className} aria-hidden="true">
       <defs>
@@ -54,7 +61,7 @@ export function SafeSketch({ className = "" }: { className?: string }) {
           const y2 = 176 + Math.sin(angle) * 46;
           return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />;
         })}
-        <line x1="180" y1="176" x2="180" y2="138" />
+        <line x1="180" y1="176" x2="180" y2="138" className={animated ? "safe-dial-needle" : ""} />
 
         {/* handle / bolt lever */}
         <rect x="130" y="268" width="100" height="20" rx="10" />

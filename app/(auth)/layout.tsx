@@ -1,12 +1,21 @@
 import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { SafeSketch } from "@/components/ui/safe-sketch";
 
+const PARTICLES = [
+  { left: "18%", size: 5, delay: "0s", duration: "9s", opacity: 0.5 },
+  { left: "32%", size: 3, delay: "2.5s", duration: "11s", opacity: 0.35 },
+  { left: "48%", size: 4, delay: "1.2s", duration: "10s", opacity: 0.45 },
+  { left: "64%", size: 3, delay: "4s", duration: "9.5s", opacity: 0.3 },
+  { left: "78%", size: 5, delay: "3s", duration: "12s", opacity: 0.4 },
+  { left: "88%", size: 3, delay: "5.5s", duration: "10.5s", opacity: 0.35 },
+];
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-scrim lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
         <div
-          className="pointer-events-none absolute inset-0"
+          className="auth-glow pointer-events-none absolute inset-0"
           style={{ background: "radial-gradient(circle at 30% 20%, rgba(99,102,241,0.28), transparent 55%)" }}
           aria-hidden="true"
         />
@@ -20,10 +29,26 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           aria-hidden="true"
         />
 
-        <TijoriLogo variant="white" height={20} className="relative self-start" />
+        {PARTICLES.map((p, i) => (
+          <div
+            key={i}
+            className="auth-particle pointer-events-none absolute bottom-24 rounded-full bg-white blur-[1px]"
+            style={{
+              left: p.left,
+              width: p.size,
+              height: p.size,
+              animationDelay: p.delay,
+              animationDuration: p.duration,
+              ["--particle-opacity" as string]: p.opacity,
+            }}
+            aria-hidden="true"
+          />
+        ))}
+
+        <div aria-hidden="true" className="relative" />
 
         <div className="relative mx-auto w-full max-w-[280px] text-white/85">
-          <SafeSketch className="w-full" />
+          <SafeSketch className="w-full" animated />
         </div>
 
         <TijoriLogo part="full" variant="white" height={68} className="relative self-start" />
