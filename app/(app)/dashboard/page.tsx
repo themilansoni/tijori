@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/authorize";
 import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-selector";
 import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
+import { QuickAddFab } from "@/components/dashboard/quick-add-fab";
 import {
   getPeriodRange,
   sumAmount,
@@ -51,6 +52,8 @@ export default async function DashboardPage({
     { data: accountsRaw },
     { data: budgetsRaw },
     { data: holdingsRaw },
+    canAddExpense,
+    canAddIncome,
   ] = await Promise.all([
     can("dashboard", "view", supabase),
     supabase.from("transactions").select("*").order("created_at", { ascending: false }),
@@ -58,6 +61,8 @@ export default async function DashboardPage({
     supabase.from("accounts").select("*").order("name"),
     supabase.from("budgets").select("*, categories!inner(type)").eq("categories.type", "expense"),
     supabase.from("investment_holdings").select("*").eq("is_active", true).order("instrument_name"),
+    can("expenses", "create", supabase),
+    can("income", "create", supabase),
   ]);
 
   if (!allowed) {
@@ -73,6 +78,9 @@ export default async function DashboardPage({
   const accounts = (accountsRaw ?? []) as Account[];
   const budgets = (budgetsRaw ?? []) as Budget[];
   const activeHoldings = (holdingsRaw ?? []) as InvestmentHolding[];
+
+  const activeExpenseCategories = categories.filter((c) => c.is_active && c.type === "expense");
+  const activeIncomeCategories = categories.filter((c) => c.is_active && c.type === "income");
 
   const periodTransactions = allTransactions.filter(
     (t) => t.transaction_date >= start && t.transaction_date <= end
@@ -394,6 +402,14 @@ export default async function DashboardPage({
           </div>
         )}
       </section>
+
+      <QuickAddFab
+        expenseCategories={activeExpenseCategories}
+        incomeCategories={activeIncomeCategories}
+        accounts={activeAccounts}
+        canAddExpense={canAddExpense}
+        canAddIncome={canAddIncome}
+      />
     </div>
   );
 }
