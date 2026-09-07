@@ -130,12 +130,12 @@ option {
 
 @keyframes auth-particle-float {
   0% { transform: translateY(0) scale(0.8); opacity: 0; }
-  15% { opacity: var(--particle-opacity, 0.5); }
-  85% { opacity: var(--particle-opacity, 0.5); }
-  100% { transform: translateY(-160px) scale(1.15); opacity: 0; }
+  8% { opacity: var(--particle-opacity, 0.5); }
+  92% { opacity: var(--particle-opacity, 0.5); }
+  100% { transform: translateY(-115vh) scale(1.15); opacity: 0; }
 }
 .auth-particle {
-  animation: auth-particle-float 9s ease-in infinite;
+  animation: auth-particle-float 9s linear infinite;
   animation-delay: var(--particle-delay, 0s);
 }
 

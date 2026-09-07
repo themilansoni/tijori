@@ -2,13 +2,14 @@ import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { SafeSketch } from "@/components/ui/safe-sketch";
 
 const PARTICLES = [
-  { left: "14%", size: 16, delay: "0s", duration: "3.4s", opacity: 0.55 },
-  { left: "26%", size: 12, delay: "1s", duration: "4.2s", opacity: 0.35 },
-  { left: "40%", size: 15, delay: "0.5s", duration: "3.8s", opacity: 0.5 },
-  { left: "55%", size: 12, delay: "1.6s", duration: "3.6s", opacity: 0.3 },
-  { left: "68%", size: 17, delay: "1.2s", duration: "4.6s", opacity: 0.45 },
-  { left: "80%", size: 12, delay: "2.1s", duration: "3.4s", opacity: 0.35 },
-  { left: "90%", size: 15, delay: "0.8s", duration: "4s", opacity: 0.4 },
+  { left: "10%", size: 18, delay: "0s", duration: "4.5s", opacity: 0.55 },
+  { left: "20%", size: 13, delay: "1.2s", duration: "5.5s", opacity: 0.35 },
+  { left: "32%", size: 16, delay: "0.6s", duration: "5s", opacity: 0.5 },
+  { left: "44%", size: 13, delay: "2s", duration: "4.8s", opacity: 0.3 },
+  { left: "56%", size: 18, delay: "1.6s", duration: "6s", opacity: 0.45 },
+  { left: "68%", size: 13, delay: "2.6s", duration: "4.5s", opacity: 0.35 },
+  { left: "78%", size: 16, delay: "1s", duration: "5.2s", opacity: 0.4 },
+  { left: "88%", size: 14, delay: "2.2s", duration: "5.8s", opacity: 0.35 },
 ];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -33,7 +34,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {PARTICLES.map((p, i) => (
           <span
             key={i}
-            className="auth-particle pointer-events-none absolute bottom-24 font-semibold text-white"
+            className="auth-particle pointer-events-none absolute bottom-0 font-semibold text-white"
             style={{
               left: p.left,
               fontSize: p.size,
