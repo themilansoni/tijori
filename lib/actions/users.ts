@@ -46,7 +46,7 @@ export async function createUser(formData: FormData): Promise<CreateUserResult> 
   // to the chosen role/name rather than inserting a second one.
   const { error: profileError } = await admin
     .from("profiles")
-    .update({ role_id: roleId, full_name: fullName || email })
+    .update({ role_id: roleId, full_name: fullName || email, must_change_password: true })
     .eq("id", userId);
   if (profileError) return { error: profileError.message };
 
@@ -133,6 +133,7 @@ export async function resetUserPassword(id: string): Promise<ResetPasswordResult
   if (error) return { error: error.message };
 
   const { data: existing } = await admin.from("profiles").select("full_name").eq("id", id).single();
+  await admin.from("profiles").update({ must_change_password: true }).eq("id", id);
   await logAudit({
     action: "user.password_reset",
     targetType: "user",

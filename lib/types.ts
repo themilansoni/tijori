@@ -177,6 +177,7 @@ export type Profile = {
   full_name: string | null;
   status: "active" | "inactive";
   role_id: string | null;
+  must_change_password: boolean;
   created_at: string;
   updated_at: string;
 };

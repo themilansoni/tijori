@@ -6,6 +6,7 @@ const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password"];
 // able to load this to set a new password from a recovery link, and a
 // signed-out one obviously needs it too.
 const ALWAYS_ACCESSIBLE_ROUTES = ["/reset-password"];
+const CHANGE_PASSWORD_ROUTE = "/change-password";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -50,6 +51,15 @@ export async function updateSession(request: NextRequest) {
   if (isLoggedIn && isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // Admin-issued temp passwords (new user, or an admin "Reset password")
+  // must be replaced before the user can do anything else in the app.
+  const mustChangePassword = data?.claims?.must_change_password === true;
+  if (mustChangePassword && path !== CHANGE_PASSWORD_ROUTE) {
+    const url = request.nextUrl.clone();
+    url.pathname = CHANGE_PASSWORD_ROUTE;
     return NextResponse.redirect(url);
   }
 

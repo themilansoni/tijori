@@ -115,3 +115,38 @@ export async function updatePassword(
 
   redirect("/dashboard");
 }
+
+/**
+ * Used on the forced /change-password page — same validation as
+ * updatePassword, but also clears must_change_password so the middleware
+ * gate stops redirecting here once the user has set their own password.
+ */
+export async function changeOwnPassword(
+  _prevState: AuthState,
+  formData: FormData
+): Promise<AuthState> {
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!password) return { error: "Password is required." };
+  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (password !== confirmPassword) return { error: "Passwords do not match." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session has expired. Please sign in again." };
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: error.message };
+
+  await supabase.from("profiles").update({ must_change_password: false }).eq("id", user.id);
+
+  // The access token still carries the old must_change_password claim —
+  // refresh it now so the proxy gate sees the cleared flag immediately
+  // instead of leaving the user stuck here until the token naturally expires.
+  await supabase.auth.refreshSession();
+
+  redirect("/dashboard");
+}

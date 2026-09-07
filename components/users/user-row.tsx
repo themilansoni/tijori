@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateUserProfile, setUserActive, resetUserPassword } from "@/lib/actions/users";
+import { updateUserProfile, setUserActive } from "@/lib/actions/users";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { ResetPasswordButton } from "@/components/users/reset-password-button";
 import type { Profile, Role } from "@/lib/types";
 
 export function UserRow({
@@ -18,7 +19,6 @@ export function UserRow({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
 
   function handleRoleChange(roleId: string) {
     setError(undefined);
@@ -30,17 +30,6 @@ export function UserRow({
       const result = await updateUserProfile(formData);
       if ("error" in result && result.error) setError(result.error);
     });
-  }
-
-  async function handleResetPassword() {
-    setError(undefined);
-    setTempPassword(null);
-    const result = await resetUserPassword(profile.id);
-    if ("error" in result) {
-      setError(result.error);
-      return;
-    }
-    setTempPassword(result.tempPassword);
   }
 
   return (
@@ -72,22 +61,9 @@ export function UserRow({
       </div>
 
       {error && <p className="mt-2 text-[12.5px] text-danger">{error}</p>}
-      {tempPassword && (
-        <div className="mt-3 rounded-[10px] border border-border bg-surface-2 px-4 py-3 text-[13px]">
-          New temporary password —{" "}
-          <span className="font-mono tracking-wide text-foreground">{tempPassword}</span>. Share it with{" "}
-          {profile.full_name || email}; it won&apos;t be shown again.
-        </div>
-      )}
 
       <div className="mt-3 flex items-center gap-3 text-xs">
-        <ConfirmButton
-          className="text-muted hover:text-foreground"
-          confirmMessage={`Set a new temporary password for "${profile.full_name || email}"?`}
-          action={handleResetPassword}
-        >
-          Reset password
-        </ConfirmButton>
+        <ResetPasswordButton userId={profile.id} name={profile.full_name || email} />
         {!isSelf &&
           (profile.status === "active" ? (
             <ConfirmButton
