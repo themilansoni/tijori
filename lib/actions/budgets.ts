@@ -1,62 +1,41 @@
-"use server";
-
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { can } from "@/lib/authorize";
-import { logAudit } from "@/lib/audit";
+import { collection, doc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import { requireUid } from "@/lib/firebase/require-user";
 import type { ActionResult } from "./categories";
 
-const PERMISSION_ERROR = "You don't have permission to do this.";
+const PERIODS = ["daily", "weekly", "monthly", "yearly"];
 
 export async function createBudget(formData: FormData): Promise<ActionResult> {
-  const supabase = await createClient();
-  if (!(await can("budgets", "create", supabase))) return { error: PERMISSION_ERROR };
+  const auth = requireUid();
+  if ("error" in auth) return auth;
 
   const category_id = String(formData.get("category_id") ?? "");
   const amount = Number(formData.get("amount"));
   const period = String(formData.get("period") ?? "");
-  const start_date = String(formData.get("start_date") ?? "") || undefined;
+  const start_date = String(formData.get("start_date") ?? "") || new Date().toISOString().slice(0, 10);
 
   if (!category_id) return { error: "Category is required." };
   if (!Number.isFinite(amount) || amount <= 0) return { error: "Budget must be greater than 0." };
-  if (!["daily", "weekly", "monthly", "yearly"].includes(period)) {
-    return { error: "Invalid budget period." };
-  }
+  if (!PERIODS.includes(period)) return { error: "Invalid budget period." };
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated." };
-
-  const { data, error } = await supabase
-    .from("budgets")
-    .insert({
-      user_id: user.id,
-      category_id,
-      amount,
-      period,
-      ...(start_date ? { start_date } : {}),
-    })
-    .select()
-    .single();
-
-  if (error) return { error: error.message };
-
-  await logAudit({
-    action: "budget.created",
-    targetType: "budget",
-    targetId: data.id,
-    summary: `Created budget of ₹${amount}/${period}`,
+  const now = new Date().toISOString();
+  await addDoc(collection(db, "users", auth.uid, "budgets"), {
+    user_id: auth.uid,
+    category_id,
+    amount,
+    period,
+    start_date,
+    is_active: true,
+    created_at: now,
+    updated_at: now,
   });
 
-  revalidatePath("/budgets");
-  revalidatePath("/expenses");
   return { ok: true };
 }
 
 export async function updateBudget(formData: FormData): Promise<ActionResult> {
-  const supabase = await createClient();
-  if (!(await can("budgets", "edit", supabase))) return { error: PERMISSION_ERROR };
+  const auth = requireUid();
+  if ("error" in auth) return auth;
 
   const id = String(formData.get("id") ?? "");
   const amount = Number(formData.get("amount"));
@@ -64,62 +43,33 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
 
   if (!id) return { error: "Missing budget id." };
   if (!Number.isFinite(amount) || amount <= 0) return { error: "Budget must be greater than 0." };
-  if (!["daily", "weekly", "monthly", "yearly"].includes(period)) {
-    return { error: "Invalid budget period." };
-  }
+  if (!PERIODS.includes(period)) return { error: "Invalid budget period." };
 
-  const { error } = await supabase.from("budgets").update({ amount, period }).eq("id", id);
-
-  if (error) return { error: error.message };
-
-  await logAudit({
-    action: "budget.updated",
-    targetType: "budget",
-    targetId: id,
-    summary: `Updated budget to ₹${amount}/${period}`,
+  await updateDoc(doc(db, "users", auth.uid, "budgets", id), {
+    amount,
+    period,
+    updated_at: new Date().toISOString(),
   });
 
-  revalidatePath("/budgets");
-  revalidatePath("/expenses");
   return { ok: true };
 }
 
 export async function setBudgetActive(id: string, isActive: boolean): Promise<ActionResult> {
-  const supabase = await createClient();
-  if (!(await can("budgets", "edit", supabase))) return { error: PERMISSION_ERROR };
+  const auth = requireUid();
+  if ("error" in auth) return auth;
 
-  const { error } = await supabase.from("budgets").update({ is_active: isActive }).eq("id", id);
-
-  if (error) return { error: error.message };
-
-  await logAudit({
-    action: isActive ? "budget.reactivated" : "budget.deactivated",
-    targetType: "budget",
-    targetId: id,
-    summary: `${isActive ? "Reactivated" : "Deactivated"} budget`,
+  await updateDoc(doc(db, "users", auth.uid, "budgets", id), {
+    is_active: isActive,
+    updated_at: new Date().toISOString(),
   });
 
-  revalidatePath("/budgets");
-  revalidatePath("/expenses");
   return { ok: true };
 }
 
 export async function deleteBudget(id: string): Promise<ActionResult> {
-  const supabase = await createClient();
-  if (!(await can("budgets", "delete", supabase))) return { error: PERMISSION_ERROR };
+  const auth = requireUid();
+  if ("error" in auth) return auth;
 
-  const { error } = await supabase.from("budgets").delete().eq("id", id);
-
-  if (error) return { error: error.message };
-
-  await logAudit({
-    action: "budget.deleted",
-    targetType: "budget",
-    targetId: id,
-    summary: "Deleted budget",
-  });
-
-  revalidatePath("/budgets");
-  revalidatePath("/expenses");
+  await deleteDoc(doc(db, "users", auth.uid, "budgets", id));
   return { ok: true };
 }

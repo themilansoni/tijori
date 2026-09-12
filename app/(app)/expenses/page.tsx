@@ -1,4 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import { mapDocs } from "@/lib/firebase/collection-helpers";
+import { useAuth } from "@/lib/auth-context";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
@@ -18,44 +25,65 @@ import {
 } from "@/lib/calculations";
 import type { Account, Category, PeriodKey, Transaction } from "@/lib/types";
 
-export default async function ExpensesPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | undefined>>;
-}) {
-  const sp = await searchParams;
-  const period = (sp.period as PeriodKey) || "month";
-  const today = new Date();
+export default function ExpensesPage() {
+  return (
+    <Suspense fallback={null}>
+      <ExpensesContent />
+    </Suspense>
+  );
+}
 
+function ExpensesContent() {
+  const { user, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const period = (searchParams.get("period") as PeriodKey) || "month";
+  const from = searchParams.get("from") ?? undefined;
+  const to = searchParams.get("to") ?? undefined;
+  const categoryFilter = searchParams.get("category") ?? undefined;
+  const sort = (searchParams.get("sort") as SortKey) || "newest";
+  const q = searchParams.get("q")?.trim().toLowerCase();
+
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [allExpenseTransactions, setAllExpenseTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    const uid = user.uid;
+    const [catSnap, txSnap, accSnap] = await Promise.all([
+      getDocs(query(collection(db, "users", uid, "categories"), where("type", "==", "expense"))),
+      getDocs(query(collection(db, "users", uid, "transactions"), where("type", "==", "expense"))),
+      getDocs(query(collection(db, "users", uid, "accounts"), where("is_active", "==", true))),
+    ]);
+    setCategories(mapDocs<Category>(catSnap).sort((a, b) => a.name.localeCompare(b.name)));
+    setAllExpenseTransactions(mapDocs<Transaction>(txSnap));
+    setAccounts(mapDocs<Account>(accSnap).sort((a, b) => a.name.localeCompare(b.name)));
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (authLoading || loading) return null;
+
+  const today = new Date();
   const { start, end } =
-    period === "custom" && sp.from && sp.to
-      ? getPeriodRange("custom", today, { from: sp.from, to: sp.to })
+    period === "custom" && from && to
+      ? getPeriodRange("custom", today, { from, to })
       : getPeriodRange(period === "custom" ? "month" : period, today);
 
-  const supabase = await createClient();
-
-  const [{ data: categoriesRaw }, { data: periodTxRaw }, { data: accountsRaw }] = await Promise.all([
-    supabase.from("categories").select("*").eq("type", "expense").order("name"),
-    supabase
-      .from("transactions")
-      .select("*")
-      .eq("type", "expense")
-      .gte("transaction_date", start)
-      .lte("transaction_date", end),
-    supabase.from("accounts").select("*").eq("is_active", true).order("name"),
-  ]);
-
-  const categories = (categoriesRaw ?? []) as Category[];
   const activeCategories = categories.filter((c) => c.is_active);
-  const periodTransactions = (periodTxRaw ?? []) as Transaction[];
-  const accounts = (accountsRaw ?? []) as Account[];
+  const periodTransactions = allExpenseTransactions.filter(
+    (t) => t.transaction_date >= start && t.transaction_date <= end
+  );
 
-  // ---- Summary stats ----
   const totalExpenses = sumAmount(periodTransactions);
   const avgDaily = dailyAverage(periodTransactions, start, end);
   const catBreakdown = categorySpending(periodTransactions, categories);
 
-  // ---- Chart data ----
   const chart =
     period === "year"
       ? spendingByMonth(periodTransactions, start, end).map((m) => ({ label: m.label, amount: m.amount }))
@@ -63,17 +91,11 @@ export default async function ExpensesPage({
       ? []
       : spendingByDay(periodTransactions, start, end).map((d) => ({ label: d.label, amount: d.amount }));
 
-  // ---- Filters/sort/search (applied to the period's transactions for the list) ----
-  const categoryFilter = sp.category;
-  const sort = (sp.sort as SortKey) || "newest";
-  const q = sp.q?.trim().toLowerCase();
-
   let visible = periodTransactions;
   if (categoryFilter) visible = visible.filter((t) => t.category_id === categoryFilter);
   if (q) {
     visible = visible.filter(
-      (t) =>
-        t.description?.toLowerCase().includes(q) || t.note?.toLowerCase().includes(q)
+      (t) => t.description?.toLowerCase().includes(q) || t.note?.toLowerCase().includes(q)
     );
   }
   visible = [...visible].sort((a, b) => {
@@ -106,13 +128,13 @@ export default async function ExpensesPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Expenses</h1>
         <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
-          <ExpenseForm categories={activeCategories} accounts={accounts} keepOpenOnAdd />
+          <ExpenseForm categories={activeCategories} accounts={accounts} keepOpenOnAdd onSuccess={load} />
         </Modal>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <PeriodSelector current={period} />
-        {period === "custom" && <CustomRangePicker from={sp.from} to={sp.to} />}
+        {period === "custom" && <CustomRangePicker from={from} to={to} />}
       </div>
 
       {activeCategories.length === 0 && (
@@ -173,7 +195,7 @@ export default async function ExpensesPage({
           categories={categories}
           currentCategory={categoryFilter}
           currentSort={sort}
-          currentSearch={sp.q}
+          currentSearch={searchParams.get("q") ?? undefined}
         />
       </div>
 
@@ -186,12 +208,12 @@ export default async function ExpensesPage({
             </p>
             <div className="mt-4">
               <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
-                <ExpenseForm categories={activeCategories} accounts={accounts} keepOpenOnAdd />
+                <ExpenseForm categories={activeCategories} accounts={accounts} keepOpenOnAdd onSuccess={load} />
               </Modal>
             </div>
           </div>
         ) : (
-          <ExpenseList transactions={visible} categories={categories} accounts={accounts} />
+          <ExpenseList transactions={visible} categories={categories} accounts={accounts} onChanged={load} />
         )}
       </div>
     </div>

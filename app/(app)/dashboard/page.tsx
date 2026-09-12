@@ -1,7 +1,13 @@
+"use client";
+
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { createClient } from "@/lib/supabase/server";
-import { can } from "@/lib/authorize";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import { mapDocs } from "@/lib/firebase/collection-helpers";
+import { useAuth } from "@/lib/auth-context";
 import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-selector";
 import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
 import { QuickAddFab } from "@/components/dashboard/quick-add-fab";
@@ -29,55 +35,68 @@ import {
   type Transaction,
 } from "@/lib/types";
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | undefined>>;
-}) {
-  const sp = await searchParams;
-  const period = (sp.period as PeriodKey) || "month";
-  const today = new Date();
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
 
-  const { start, end } =
-    period === "custom" && sp.from && sp.to
-      ? getPeriodRange("custom", today, { from: sp.from, to: sp.to })
-      : getPeriodRange(period === "custom" ? "month" : period, today);
+function DashboardContent() {
+  const { user, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const period = (searchParams.get("period") as PeriodKey) || "month";
+  const from = searchParams.get("from") ?? undefined;
+  const to = searchParams.get("to") ?? undefined;
 
-  const supabase = await createClient();
+  const [loading, setLoading] = useState(true);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [activeHoldings, setActiveHoldings] = useState<InvestmentHolding[]>([]);
 
-  const [
-    allowed,
-    { data: txRaw },
-    { data: categoriesRaw },
-    { data: accountsRaw },
-    { data: budgetsRaw },
-    { data: holdingsRaw },
-    canAddExpense,
-    canAddIncome,
-  ] = await Promise.all([
-    can("dashboard", "view", supabase),
-    supabase.from("transactions").select("*").order("created_at", { ascending: false }),
-    supabase.from("categories").select("*"),
-    supabase.from("accounts").select("*").order("name"),
-    supabase.from("budgets").select("*, categories!inner(type)").eq("categories.type", "expense"),
-    supabase.from("investment_holdings").select("*").eq("is_active", true).order("instrument_name"),
-    can("expenses", "create", supabase),
-    can("income", "create", supabase),
-  ]);
+  const load = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    const uid = user.uid;
+    const [txSnap, catSnap, accSnap, budgetSnap, holdingSnap] = await Promise.all([
+      getDocs(collection(db, "users", uid, "transactions")),
+      getDocs(collection(db, "users", uid, "categories")),
+      getDocs(collection(db, "users", uid, "accounts")),
+      getDocs(collection(db, "users", uid, "budgets")),
+      getDocs(collection(db, "users", uid, "investmentHoldings")),
+    ]);
 
-  if (!allowed) {
-    return (
-      <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted">
-        You don&apos;t have permission to view the dashboard.
-      </div>
+    const cats = mapDocs<Category>(catSnap);
+    const catById = new Map(cats.map((c) => [c.id, c]));
+
+    setAllTransactions(
+      mapDocs<Transaction>(txSnap).sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
     );
-  }
+    setCategories(cats);
+    setAccounts(mapDocs<Account>(accSnap).sort((a, b) => a.name.localeCompare(b.name)));
+    setBudgets(mapDocs<Budget>(budgetSnap).filter((b) => catById.get(b.category_id)?.type === "expense"));
+    setActiveHoldings(
+      mapDocs<InvestmentHolding>(holdingSnap)
+        .filter((h) => h.is_active)
+        .sort((a, b) => a.instrument_name.localeCompare(b.instrument_name))
+    );
+    setLoading(false);
+  }, [user]);
 
-  const allTransactions = (txRaw ?? []) as Transaction[];
-  const categories = (categoriesRaw ?? []) as Category[];
-  const accounts = (accountsRaw ?? []) as Account[];
-  const budgets = (budgetsRaw ?? []) as Budget[];
-  const activeHoldings = (holdingsRaw ?? []) as InvestmentHolding[];
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (authLoading || loading) return null;
+
+  const today = new Date();
+  const { start, end } =
+    period === "custom" && from && to
+      ? getPeriodRange("custom", today, { from, to })
+      : getPeriodRange(period === "custom" ? "month" : period, today);
 
   const activeExpenseCategories = categories.filter((c) => c.is_active && c.type === "expense");
   const activeIncomeCategories = categories.filter((c) => c.is_active && c.type === "income");
@@ -144,7 +163,7 @@ export default async function DashboardPage({
       </div>
       {period === "custom" && (
         <div className="mt-3">
-          <CustomRangePicker from={sp.from} to={sp.to} />
+          <CustomRangePicker from={from} to={to} />
         </div>
       )}
 
@@ -407,8 +426,9 @@ export default async function DashboardPage({
         expenseCategories={activeExpenseCategories}
         incomeCategories={activeIncomeCategories}
         accounts={activeAccounts}
-        canAddExpense={canAddExpense}
-        canAddIncome={canAddIncome}
+        canAddExpense
+        canAddIncome
+        onSuccess={load}
       />
     </div>
   );

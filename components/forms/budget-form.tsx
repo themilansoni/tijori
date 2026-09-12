@@ -9,9 +9,11 @@ import type { Budget, Category } from "@/lib/types";
 export function BudgetForm({
   categories,
   budget,
+  onSuccess,
 }: {
   categories: Category[];
   budget?: Budget;
+  onSuccess?: () => void;
 }) {
   const { close } = useModal();
   const [pending, startTransition] = useTransition();
@@ -25,6 +27,7 @@ export function BudgetForm({
         setError(result.error);
         return;
       }
+      onSuccess?.();
       close();
     });
   }

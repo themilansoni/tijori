@@ -1,4 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import { mapDocs } from "@/lib/firebase/collection-helpers";
+import { useAuth } from "@/lib/auth-context";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
@@ -7,16 +13,31 @@ import { AccountRow } from "./account-row";
 import { accountBalance, fmtCurrency } from "@/lib/calculations";
 import type { Account, Transaction } from "@/lib/types";
 
-export default async function AccountsPage() {
-  const supabase = await createClient();
+export default function AccountsPage() {
+  const { user, loading: authLoading } = useAuth();
 
-  const [{ data: accountsRaw }, { data: txRaw }] = await Promise.all([
-    supabase.from("accounts").select("*").order("name"),
-    supabase.from("transactions").select("*").not("account_id", "is", null),
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const accounts = (accountsRaw ?? []) as Account[];
-  const transactions = (txRaw ?? []) as Transaction[];
+  const load = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    const uid = user.uid;
+    const [accSnap, txSnap] = await Promise.all([
+      getDocs(collection(db, "users", uid, "accounts")),
+      getDocs(collection(db, "users", uid, "transactions")),
+    ]);
+    setAccounts(mapDocs<Account>(accSnap).sort((a, b) => a.name.localeCompare(b.name)));
+    setTransactions(mapDocs<Transaction>(txSnap));
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (authLoading || loading) return null;
 
   const active = accounts.filter((a) => a.is_active);
   const inactive = accounts.filter((a) => !a.is_active);
@@ -29,7 +50,7 @@ export default async function AccountsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Accounts</h1>
         <Modal trigger={<Button>+ Add Account</Button>} title="Add account">
-          <AccountForm />
+          <AccountForm onSuccess={load} />
         </Modal>
       </div>
       <p className="mt-2 text-muted">
@@ -52,17 +73,17 @@ export default async function AccountsPage() {
             </p>
             <div className="mt-4">
               <Modal trigger={<Button>+ Add Account</Button>} title="Add account">
-                <AccountForm />
+                <AccountForm onSuccess={load} />
               </Modal>
             </div>
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {active.map((a) => (
-              <AccountRow key={a.id} account={a} balance={balances.get(a.id) ?? 0} />
+              <AccountRow key={a.id} account={a} balance={balances.get(a.id) ?? 0} onChanged={load} />
             ))}
             {inactive.map((a) => (
-              <AccountRow key={a.id} account={a} balance={balances.get(a.id) ?? 0} />
+              <AccountRow key={a.id} account={a} balance={balances.get(a.id) ?? 0} onChanged={load} />
             ))}
           </div>
         )}

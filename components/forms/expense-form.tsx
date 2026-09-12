@@ -7,12 +7,14 @@ export function ExpenseForm({
   transaction,
   defaultDate,
   keepOpenOnAdd,
+  onSuccess,
 }: {
   categories: Category[];
   accounts?: Account[];
   transaction?: Transaction;
   defaultDate?: string;
   keepOpenOnAdd?: boolean;
+  onSuccess?: () => void;
 }) {
   return (
     <TransactionForm
@@ -22,6 +24,7 @@ export function ExpenseForm({
       transaction={transaction}
       defaultDate={defaultDate}
       keepOpenOnAdd={keepOpenOnAdd}
+      onSuccess={onSuccess}
     />
   );
 }

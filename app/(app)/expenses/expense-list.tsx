@@ -5,12 +5,20 @@ export function ExpenseList({
   transactions,
   categories,
   accounts = [],
+  onChanged,
 }: {
   transactions: Transaction[];
   categories: Category[];
   accounts?: Account[];
+  onChanged?: () => void;
 }) {
   return (
-    <TransactionList type="expense" transactions={transactions} categories={categories} accounts={accounts} />
+    <TransactionList
+      type="expense"
+      transactions={transactions}
+      categories={categories}
+      accounts={accounts}
+      onChanged={onChanged}
+    />
   );
 }

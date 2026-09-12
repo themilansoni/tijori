@@ -9,9 +9,11 @@ import type { Category } from "@/lib/types";
 export function CategoryForm({
   category,
   defaultType = "expense",
+  onSuccess,
 }: {
   category?: Category;
   defaultType?: "expense" | "income";
+  onSuccess?: () => void;
 }) {
   const { close } = useModal();
   const [pending, startTransition] = useTransition();
@@ -25,6 +27,7 @@ export function CategoryForm({
         setError(result.error);
         return;
       }
+      onSuccess?.();
       close();
     });
   }

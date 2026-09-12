@@ -6,7 +6,7 @@ import { Field, SelectField, SubmitButton, FormError } from "@/components/ui/fie
 import { useModal } from "@/components/ui/modal";
 import { ACCOUNT_TYPES, type Account } from "@/lib/types";
 
-export function AccountForm({ account }: { account?: Account }) {
+export function AccountForm({ account, onSuccess }: { account?: Account; onSuccess?: () => void }) {
   const { close } = useModal();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
@@ -19,6 +19,7 @@ export function AccountForm({ account }: { account?: Account }) {
         setError(result.error);
         return;
       }
+      onSuccess?.();
       close();
     });
   }

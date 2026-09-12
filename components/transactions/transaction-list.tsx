@@ -13,11 +13,13 @@ export function TransactionList({
   transactions,
   categories,
   accounts,
+  onChanged,
 }: {
   type: "expense" | "income";
   transactions: Transaction[];
   categories: Category[];
   accounts: Account[];
+  onChanged?: () => void;
 }) {
   const categoryById = new Map(categories.map((c) => [c.id, c]));
   const accountById = new Map(accounts.map((a) => [a.id, a]));
@@ -67,7 +69,7 @@ export function TransactionList({
                 </td>
                 <td className="px-4 py-3 text-muted">{accountLabel(t)}</td>
                 <td className="px-4 py-3">
-                  <RowActions type={type} transaction={t} categories={categories} accounts={accounts} />
+                  <RowActions type={type} transaction={t} categories={categories} accounts={accounts} onChanged={onChanged} />
                 </td>
               </tr>
             ))}
@@ -94,7 +96,7 @@ export function TransactionList({
               </div>
             </div>
             <div className="mt-3 flex justify-end">
-              <RowActions type={type} transaction={t} categories={categories} accounts={accounts} />
+              <RowActions type={type} transaction={t} categories={categories} accounts={accounts} onChanged={onChanged} />
             </div>
           </div>
         ))}
@@ -108,11 +110,13 @@ function RowActions({
   transaction,
   categories,
   accounts,
+  onChanged,
 }: {
   type: "expense" | "income";
   transaction: Transaction;
   categories: Category[];
   accounts: Account[];
+  onChanged?: () => void;
 }) {
   return (
     <div className="flex items-center gap-3 text-xs">
@@ -125,12 +129,17 @@ function RowActions({
           categories={categories}
           accounts={accounts}
           transaction={transaction}
+          onSuccess={onChanged}
         />
       </Modal>
       <ConfirmButton
         className="text-danger hover:brightness-110"
         confirmMessage={`Delete this ${type === "income" ? "income" : "expense"}? This can't be undone.`}
-        action={() => deleteTransaction(transaction.id)}
+        action={async () => {
+          const result = await deleteTransaction(transaction.id);
+          onChanged?.();
+          return result;
+        }}
       >
         Delete
       </ConfirmButton>

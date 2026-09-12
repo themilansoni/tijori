@@ -1,19 +1,16 @@
-"use server";
-
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { can } from "@/lib/authorize";
-import { logAudit } from "@/lib/audit";
+import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import { requireUid } from "@/lib/firebase/require-user";
 import type { ActionResult } from "./categories";
 import type { Account } from "@/lib/types";
 
-const PERMISSION_ERROR = "You don't have permission to do this.";
+const ACCOUNT_TYPES = ["cash", "bank", "credit_card", "debit_card", "wallet", "investment", "other"];
 
 export type CreateAccountResult = { error: string } | { ok: true; account: Account };
 
 export async function createAccount(formData: FormData): Promise<CreateAccountResult> {
-  const supabase = await createClient();
-  if (!(await can("accounts", "create", supabase))) return { error: PERMISSION_ERROR };
+  const auth = requireUid();
+  if ("error" in auth) return auth;
 
   const name = String(formData.get("name") ?? "").trim();
   const type = String(formData.get("type") ?? "");
@@ -21,40 +18,28 @@ export async function createAccount(formData: FormData): Promise<CreateAccountRe
   const currency = String(formData.get("currency") ?? "INR").trim() || "INR";
 
   if (!name) return { error: "Account name is required." };
-  if (!["cash", "bank", "credit_card", "debit_card", "wallet", "investment", "other"].includes(type)) {
-    return { error: "Invalid account type." };
-  }
+  if (!ACCOUNT_TYPES.includes(type)) return { error: "Invalid account type." };
   if (!Number.isFinite(opening_balance)) return { error: "Opening balance must be a number." };
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated." };
+  const now = new Date().toISOString();
+  const data = {
+    user_id: auth.uid,
+    name,
+    type,
+    opening_balance,
+    currency,
+    is_active: true,
+    created_at: now,
+    updated_at: now,
+  };
+  const docRef = await addDoc(collection(db, "users", auth.uid, "accounts"), data);
 
-  const { data, error } = await supabase
-    .from("accounts")
-    .insert({ user_id: user.id, name, type, opening_balance, currency })
-    .select()
-    .single();
-
-  if (error) return { error: error.message };
-
-  await logAudit({
-    action: "account.created",
-    targetType: "account",
-    targetId: data.id,
-    summary: `Created account "${name}" (${type})`,
-  });
-
-  revalidatePath("/accounts");
-  revalidatePath("/income");
-  revalidatePath("/expenses");
-  return { ok: true, account: data as Account };
+  return { ok: true, account: { id: docRef.id, ...data } as Account };
 }
 
 export async function updateAccount(formData: FormData): Promise<ActionResult> {
-  const supabase = await createClient();
-  if (!(await can("accounts", "edit", supabase))) return { error: PERMISSION_ERROR };
+  const auth = requireUid();
+  if ("error" in auth) return auth;
 
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -66,81 +51,46 @@ export async function updateAccount(formData: FormData): Promise<ActionResult> {
   if (!name) return { error: "Account name is required." };
   if (!Number.isFinite(opening_balance)) return { error: "Opening balance must be a number." };
 
-  const { error } = await supabase
-    .from("accounts")
-    .update({ name, type, opening_balance, currency })
-    .eq("id", id);
-
-  if (error) return { error: error.message };
-
-  await logAudit({
-    action: "account.updated",
-    targetType: "account",
-    targetId: id,
-    summary: `Updated account "${name}"`,
+  await updateDoc(doc(db, "users", auth.uid, "accounts", id), {
+    name,
+    type,
+    opening_balance,
+    currency,
+    updated_at: new Date().toISOString(),
   });
 
-  revalidatePath("/accounts");
-  revalidatePath("/income");
-  revalidatePath("/expenses");
   return { ok: true };
 }
 
 export async function setAccountActive(id: string, isActive: boolean): Promise<ActionResult> {
-  const supabase = await createClient();
-  if (!(await can("accounts", "edit", supabase))) return { error: PERMISSION_ERROR };
+  const auth = requireUid();
+  if ("error" in auth) return auth;
 
-  const { data: existing } = await supabase.from("accounts").select("name").eq("id", id).single();
-
-  const { error } = await supabase.from("accounts").update({ is_active: isActive }).eq("id", id);
-
-  if (error) return { error: error.message };
-
-  await logAudit({
-    action: isActive ? "account.reactivated" : "account.deactivated",
-    targetType: "account",
-    targetId: id,
-    summary: `${isActive ? "Reactivated" : "Deactivated"} account "${existing?.name ?? id}"`,
+  await updateDoc(doc(db, "users", auth.uid, "accounts", id), {
+    is_active: isActive,
+    updated_at: new Date().toISOString(),
   });
 
-  revalidatePath("/accounts");
   return { ok: true };
 }
 
 export async function deleteAccount(id: string): Promise<ActionResult> {
-  const supabase = await createClient();
-  if (!(await can("accounts", "delete", supabase))) return { error: PERMISSION_ERROR };
+  const auth = requireUid();
+  if ("error" in auth) return auth;
+  const { uid } = auth;
 
-  const { data: existing } = await supabase.from("accounts").select("name").eq("id", id).single();
+  const txSnap = await getDocs(
+    query(collection(db, "users", uid, "transactions"), where("account_id", "==", id))
+  );
 
-  const { count } = await supabase
-    .from("transactions")
-    .select("id", { count: "exact", head: true })
-    .eq("account_id", id);
-
-  if (count && count > 0) {
-    const { error } = await supabase.from("accounts").update({ is_active: false }).eq("id", id);
-    if (error) return { error: error.message };
-    await logAudit({
-      action: "account.deactivated",
-      targetType: "account",
-      targetId: id,
-      summary: `Deactivated account "${existing?.name ?? id}" (has transactions, could not delete)`,
+  if (!txSnap.empty) {
+    await updateDoc(doc(db, "users", uid, "accounts", id), {
+      is_active: false,
+      updated_at: new Date().toISOString(),
     });
-    revalidatePath("/accounts");
     return { ok: true };
   }
 
-  const { error } = await supabase.from("accounts").delete().eq("id", id);
-  if (error) return { error: error.message };
-
-  await logAudit({
-    action: "account.deleted",
-    targetType: "account",
-    targetId: id,
-    summary: `Deleted account "${existing?.name ?? id}"`,
-  });
-
-  revalidatePath("/accounts");
+  await deleteDoc(doc(db, "users", uid, "accounts", id));
   return { ok: true };
 }

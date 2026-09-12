@@ -1,11 +1,47 @@
 "use client";
 
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signup } from "@/lib/actions/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
+import { firebaseAuthErrorMessage } from "@/lib/firebase/errors";
+import { seedDefaultCategories } from "@/lib/firebase/seed";
 import { Field, SubmitButton, FormError } from "@/components/ui/field";
 
+type AuthState = { error?: string } | undefined;
+
 export default function SignupPage() {
+  const router = useRouter();
+
+  async function signup(_prevState: AuthState, formData: FormData): Promise<AuthState> {
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+    const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+    if (!email || !password) {
+      return { error: "Email and password are required." };
+    }
+    if (password.length < 8) {
+      return { error: "Password must be at least 8 characters." };
+    }
+    if (password !== confirmPassword) {
+      return { error: "Passwords do not match." };
+    }
+
+    let uid: string;
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      uid = credential.user.uid;
+    } catch (err) {
+      return { error: firebaseAuthErrorMessage(err) };
+    }
+
+    await seedDefaultCategories(uid);
+    router.replace("/dashboard");
+    return undefined;
+  }
+
   const [state, formAction, pending] = useActionState(signup, undefined);
 
   return (

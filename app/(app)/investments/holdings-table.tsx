@@ -18,7 +18,15 @@ import { ASSET_TYPES, type Account, type InvestmentHolding } from "@/lib/types";
 
 type SortKey = "name" | "currentValue" | "invested" | "pnl" | "pnlPercent";
 
-export function HoldingsTable({ holdings, accounts }: { holdings: InvestmentHolding[]; accounts: Account[] }) {
+export function HoldingsTable({
+  holdings,
+  accounts,
+  onChanged,
+}: {
+  holdings: InvestmentHolding[];
+  accounts: Account[];
+  onChanged?: () => void;
+}) {
   const [sortKey, setSortKey] = useState<SortKey>("currentValue");
   const [sortDesc, setSortDesc] = useState(true);
 
@@ -113,21 +121,25 @@ export function HoldingsTable({ holdings, accounts }: { holdings: InvestmentHold
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2.5 whitespace-nowrap text-xs">
                     <Modal trigger={<Button size="sm">+ Txn</Button>} title={`Record transaction — ${holding.instrument_name}`}>
-                      <InvestmentTransactionForm holding={holding} accounts={accounts} />
+                      <InvestmentTransactionForm holding={holding} accounts={accounts} onSuccess={onChanged} />
                     </Modal>
                     {holding.source === "manual" && (
                       <Modal
                         trigger={<button className="text-muted hover:text-foreground">Edit</button>}
                         title="Edit investment"
                       >
-                        <ManualHoldingForm holding={holding} />
+                        <ManualHoldingForm holding={holding} onSuccess={onChanged} />
                       </Modal>
                     )}
                     {holding.is_active ? (
                       <ConfirmButton
                         className="text-muted hover:text-foreground"
                         confirmMessage={`Deactivate "${holding.instrument_name}"?`}
-                        action={() => setHoldingActive(holding.id, false)}
+                        action={async () => {
+                          const result = await setHoldingActive(holding.id, false);
+                          onChanged?.();
+                          return result;
+                        }}
                       >
                         Deactivate
                       </ConfirmButton>
@@ -135,7 +147,11 @@ export function HoldingsTable({ holdings, accounts }: { holdings: InvestmentHold
                       <ConfirmButton
                         className="text-accent hover:brightness-110"
                         confirmMessage={`Reactivate "${holding.instrument_name}"?`}
-                        action={() => setHoldingActive(holding.id, true)}
+                        action={async () => {
+                          const result = await setHoldingActive(holding.id, true);
+                          onChanged?.();
+                          return result;
+                        }}
                       >
                         Reactivate
                       </ConfirmButton>
@@ -143,7 +159,11 @@ export function HoldingsTable({ holdings, accounts }: { holdings: InvestmentHold
                     <ConfirmButton
                       className="text-danger hover:brightness-110"
                       confirmMessage={`Delete "${holding.instrument_name}"? If it has transactions it will be deactivated instead.`}
-                      action={() => deleteHolding(holding.id)}
+                      action={async () => {
+                        const result = await deleteHolding(holding.id);
+                        onChanged?.();
+                        return result;
+                      }}
                     >
                       Delete
                     </ConfirmButton>

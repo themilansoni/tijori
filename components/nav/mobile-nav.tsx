@@ -9,11 +9,9 @@ import { SidebarNav } from "./sidebar-nav";
 export function MobileNav({
   userEmail,
   logoutForm,
-  hiddenHrefs,
 }: {
   userEmail?: string;
   logoutForm: React.ReactNode;
-  hiddenHrefs?: string[];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -61,7 +59,7 @@ export function MobileNav({
             </div>
 
             <div className="mt-6 flex-1">
-              <SidebarNav onNavigate={() => setOpen(false)} hiddenHrefs={hiddenHrefs} />
+              <SidebarNav onNavigate={() => setOpen(false)} />
             </div>
 
             <div className="border-t border-nav-border pt-4">

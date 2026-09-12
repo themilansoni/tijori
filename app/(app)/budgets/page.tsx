@@ -1,4 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import { mapDocs } from "@/lib/firebase/collection-helpers";
+import { useAuth } from "@/lib/auth-context";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { BudgetForm } from "@/components/forms/budget-form";
@@ -6,25 +12,43 @@ import { BudgetRow } from "./budget-row";
 import { budgetStatus, fmtCurrency } from "@/lib/calculations";
 import type { Budget, Category, Transaction } from "@/lib/types";
 
-export default async function BudgetsPage() {
-  const supabase = await createClient();
+export default function BudgetsPage() {
+  const { user, loading: authLoading } = useAuth();
   const today = new Date();
 
-  const [{ data: categoriesRaw }, { data: budgetsRaw }, { data: txRaw }] = await Promise.all([
-    supabase.from("categories").select("*").eq("type", "expense").order("name"),
-    supabase.from("budgets").select("*, categories!inner(type)").eq("categories.type", "expense"),
-    supabase.from("transactions").select("*").eq("type", "expense"),
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const categories = (categoriesRaw ?? []) as Category[];
+  const load = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    const uid = user.uid;
+    const [catSnap, budgetSnap, txSnap] = await Promise.all([
+      getDocs(query(collection(db, "users", uid, "categories"), where("type", "==", "expense"))),
+      getDocs(collection(db, "users", uid, "budgets")),
+      getDocs(query(collection(db, "users", uid, "transactions"), where("type", "==", "expense"))),
+    ]);
+
+    const cats = mapDocs<Category>(catSnap).sort((a, b) => a.name.localeCompare(b.name));
+    const catById = new Map(cats.map((c) => [c.id, c]));
+
+    setCategories(cats);
+    setBudgets(mapDocs<Budget>(budgetSnap).filter((b) => catById.has(b.category_id)));
+    setTransactions(mapDocs<Transaction>(txSnap));
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (authLoading || loading) return null;
+
   const activeCategories = categories.filter((c) => c.is_active);
-  const budgets = (budgetsRaw ?? []) as Budget[];
-  const transactions = (txRaw ?? []) as Transaction[];
-
   const categoryById = new Map(categories.map((c) => [c.id, c]));
-  const statuses = budgets
-    .filter((b) => categoryById.has(b.category_id))
-    .map((b) => budgetStatus(b, categoryById.get(b.category_id)!, transactions, today));
+  const statuses = budgets.map((b) => budgetStatus(b, categoryById.get(b.category_id)!, transactions, today));
 
   const active = statuses.filter((s) => s.budget.is_active);
   const inactive = statuses.filter((s) => !s.budget.is_active);
@@ -44,7 +68,7 @@ export default async function BudgetsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Budgets</h1>
         <Modal trigger={<Button>+ Create budget</Button>} title="Create budget">
-          <BudgetForm categories={categoriesAvailableForNewBudget} />
+          <BudgetForm categories={categoriesAvailableForNewBudget} onSuccess={load} />
         </Modal>
       </div>
       <p className="mt-2 text-muted">
@@ -86,17 +110,17 @@ export default async function BudgetsPage() {
             </p>
             <div className="mt-4">
               <Modal trigger={<Button>+ Create budget</Button>} title="Create budget">
-                <BudgetForm categories={categoriesAvailableForNewBudget} />
+                <BudgetForm categories={categoriesAvailableForNewBudget} onSuccess={load} />
               </Modal>
             </div>
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {active.map((s) => (
-              <BudgetRow key={s.budget.id} status={s} categories={activeCategories} />
+              <BudgetRow key={s.budget.id} status={s} categories={activeCategories} onChanged={load} />
             ))}
             {inactive.map((s) => (
-              <BudgetRow key={s.budget.id} status={s} categories={activeCategories} />
+              <BudgetRow key={s.budget.id} status={s} categories={activeCategories} onChanged={load} />
             ))}
           </div>
         )}

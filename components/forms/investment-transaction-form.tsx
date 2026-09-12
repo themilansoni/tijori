@@ -17,9 +17,11 @@ const TYPE_LABELS: Record<InvestmentTxType, string> = {
 export function InvestmentTransactionForm({
   holding,
   accounts,
+  onSuccess,
 }: {
   holding: InvestmentHolding;
   accounts: Account[];
+  onSuccess?: () => void;
 }) {
   const { close } = useModal();
   const [pending, startTransition] = useTransition();
@@ -34,6 +36,7 @@ export function InvestmentTransactionForm({
         setError(result.error);
         return;
       }
+      onSuccess?.();
       close();
     });
   }

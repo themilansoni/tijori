@@ -1,5 +1,12 @@
+"use client";
+
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { SafeSketch } from "@/components/ui/safe-sketch";
+import { useAuth } from "@/lib/auth-context";
+
+const ALWAYS_ACCESSIBLE_ROUTES = ["/reset-password"];
 
 const PARTICLES = [
   { left: "10%", size: 18, delay: "0s", duration: "4.5s", opacity: 0.55 },
@@ -13,6 +20,16 @@ const PARTICLES = [
 ];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (loading) return;
+    if (ALWAYS_ACCESSIBLE_ROUTES.some((r) => pathname.startsWith(r))) return;
+    if (user) router.replace("/dashboard");
+  }, [loading, user, pathname, router]);
+
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-scrim lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">

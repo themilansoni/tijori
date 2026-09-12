@@ -6,7 +6,13 @@ import { Field, SelectField, SubmitButton, FormError } from "@/components/ui/fie
 import { useModal } from "@/components/ui/modal";
 import { ASSET_TYPES, type InvestmentHolding } from "@/lib/types";
 
-export function ManualHoldingForm({ holding }: { holding?: InvestmentHolding }) {
+export function ManualHoldingForm({
+  holding,
+  onSuccess,
+}: {
+  holding?: InvestmentHolding;
+  onSuccess?: () => void;
+}) {
   const { close } = useModal();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
@@ -19,6 +25,7 @@ export function ManualHoldingForm({ holding }: { holding?: InvestmentHolding }) 
         setError(result.error);
         return;
       }
+      onSuccess?.();
       close();
     });
   }

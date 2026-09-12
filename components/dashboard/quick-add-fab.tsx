@@ -12,12 +12,14 @@ export function QuickAddFab({
   accounts,
   canAddExpense,
   canAddIncome,
+  onSuccess,
 }: {
   expenseCategories: Category[];
   incomeCategories: Category[];
   accounts: Account[];
   canAddExpense: boolean;
   canAddIncome: boolean;
+  onSuccess?: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -61,7 +63,13 @@ export function QuickAddFab({
                   }
                   title="Add income"
                 >
-                  <TransactionForm type="income" categories={incomeCategories} accounts={accounts} keepOpenOnAdd />
+                  <TransactionForm
+                    type="income"
+                    categories={incomeCategories}
+                    accounts={accounts}
+                    keepOpenOnAdd
+                    onSuccess={onSuccess}
+                  />
                 </Modal>
               </div>
             )}
@@ -82,7 +90,13 @@ export function QuickAddFab({
                   }
                   title="Add expense"
                 >
-                  <TransactionForm type="expense" categories={expenseCategories} accounts={accounts} keepOpenOnAdd />
+                  <TransactionForm
+                    type="expense"
+                    categories={expenseCategories}
+                    accounts={accounts}
+                    keepOpenOnAdd
+                    onSuccess={onSuccess}
+                  />
                 </Modal>
               </div>
             )}

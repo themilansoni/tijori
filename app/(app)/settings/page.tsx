@@ -1,27 +1,46 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import { mapDocs } from "@/lib/firebase/collection-helpers";
+import { useAuth } from "@/lib/auth-context";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { CategoryForm } from "@/components/forms/category-form";
 import { CategoryRow } from "./category-row";
 import type { Category } from "@/lib/types";
 
-export default async function SettingsPage() {
-  const supabase = await createClient();
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("*")
-    .order("type")
-    .order("name");
+export default function SettingsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  const expenseCategories = (categories ?? []).filter((c) => c.type === "expense") as Category[];
-  const incomeCategories = (categories ?? []).filter((c) => c.type === "income") as Category[];
+  const load = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    const snap = await getDocs(collection(db, "users", user.uid, "categories"));
+    setCategories(
+      mapDocs<Category>(snap).sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name))
+    );
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (authLoading || loading) return null;
+
+  const expenseCategories = categories.filter((c) => c.type === "expense");
+  const incomeCategories = categories.filter((c) => c.type === "income");
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Settings</h1>
         <Modal trigger={<Button>+ Add category</Button>} title="Add category">
-          <CategoryForm />
+          <CategoryForm onSuccess={load} />
         </Modal>
       </div>
       <p className="mt-2 text-muted">
@@ -29,13 +48,21 @@ export default async function SettingsPage() {
         deleting is only allowed when a category has no transactions.
       </p>
 
-      <CategoryGroup title="Expense categories" categories={expenseCategories} />
-      <CategoryGroup title="Income categories" categories={incomeCategories} />
+      <CategoryGroup title="Expense categories" categories={expenseCategories} onChanged={load} />
+      <CategoryGroup title="Income categories" categories={incomeCategories} onChanged={load} />
     </div>
   );
 }
 
-function CategoryGroup({ title, categories }: { title: string; categories: Category[] }) {
+function CategoryGroup({
+  title,
+  categories,
+  onChanged,
+}: {
+  title: string;
+  categories: Category[];
+  onChanged: () => void;
+}) {
   const active = categories.filter((c) => c.is_active);
   const inactive = categories.filter((c) => !c.is_active);
 
@@ -50,7 +77,7 @@ function CategoryGroup({ title, categories }: { title: string; categories: Categ
       ) : (
         <div className="mt-3 divide-y divide-border rounded-xl border border-border bg-surface">
           {active.map((c) => (
-            <CategoryRow key={c.id} category={c} />
+            <CategoryRow key={c.id} category={c} onChanged={onChanged} />
           ))}
           {inactive.length > 0 && (
             <>
@@ -58,7 +85,7 @@ function CategoryGroup({ title, categories }: { title: string; categories: Categ
                 Inactive
               </div>
               {inactive.map((c) => (
-                <CategoryRow key={c.id} category={c} />
+                <CategoryRow key={c.id} category={c} onChanged={onChanged} />
               ))}
             </>
           )}

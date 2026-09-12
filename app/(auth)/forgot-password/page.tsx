@@ -2,10 +2,33 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { requestPasswordReset } from "@/lib/actions/auth";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 import { Field, SubmitButton, FormError } from "@/components/ui/field";
 
+type ResetRequestState = { error?: string; success?: string } | undefined;
+
 export default function ForgotPasswordPage() {
+  async function requestPasswordReset(
+    _prevState: ResetRequestState,
+    formData: FormData
+  ): Promise<ResetRequestState> {
+    const email = String(formData.get("email") ?? "").trim();
+    if (!email) return { error: "Email is required." };
+
+    try {
+      await sendPasswordResetEmail(auth, email, {
+        url: `${window.location.origin}/reset-password`,
+        handleCodeInApp: true,
+      });
+    } catch {
+      // Deliberately don't reveal whether the email exists — same
+      // wording either way, so this can't be used to enumerate accounts.
+    }
+
+    return { success: "If an account exists for that email, we've sent a password reset link." };
+  }
+
   const [state, formAction, pending] = useActionState(requestPasswordReset, undefined);
 
   return (

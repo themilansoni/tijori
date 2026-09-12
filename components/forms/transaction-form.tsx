@@ -16,6 +16,7 @@ export function TransactionForm({
   transaction,
   defaultDate,
   keepOpenOnAdd,
+  onSuccess,
 }: {
   type: "expense" | "income";
   categories: Category[];
@@ -23,6 +24,7 @@ export function TransactionForm({
   transaction?: Transaction;
   defaultDate?: string;
   keepOpenOnAdd?: boolean;
+  onSuccess?: () => void;
 }) {
   const { close } = useModal();
   const [pending, startTransition] = useTransition();
@@ -82,6 +84,8 @@ export function TransactionForm({
         setError(result.error);
         return;
       }
+
+      onSuccess?.();
 
       if (transaction || !keepOpenOnAdd) {
         close();

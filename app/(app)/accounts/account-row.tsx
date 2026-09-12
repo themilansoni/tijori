@@ -7,7 +7,15 @@ import { setAccountActive, deleteAccount } from "@/lib/actions/accounts";
 import { fmtCurrency } from "@/lib/calculations";
 import { ACCOUNT_TYPES, type Account } from "@/lib/types";
 
-export function AccountRow({ account, balance }: { account: Account; balance: number }) {
+export function AccountRow({
+  account,
+  balance,
+  onChanged,
+}: {
+  account: Account;
+  balance: number;
+  onChanged?: () => void;
+}) {
   const typeLabel = ACCOUNT_TYPES.find((t) => t.value === account.type)?.label ?? account.type;
 
   return (
@@ -30,13 +38,17 @@ export function AccountRow({ account, balance }: { account: Account; balance: nu
           trigger={<button className="text-muted hover:text-foreground">Edit</button>}
           title="Edit account"
         >
-          <AccountForm account={account} />
+          <AccountForm account={account} onSuccess={onChanged} />
         </Modal>
         {account.is_active ? (
           <ConfirmButton
             className="text-muted hover:text-foreground"
             confirmMessage={`Deactivate "${account.name}"?`}
-            action={() => setAccountActive(account.id, false)}
+            action={async () => {
+              const result = await setAccountActive(account.id, false);
+              onChanged?.();
+              return result;
+            }}
           >
             Deactivate
           </ConfirmButton>
@@ -44,7 +56,11 @@ export function AccountRow({ account, balance }: { account: Account; balance: nu
           <ConfirmButton
             className="text-accent hover:brightness-110"
             confirmMessage={`Reactivate "${account.name}"?`}
-            action={() => setAccountActive(account.id, true)}
+            action={async () => {
+              const result = await setAccountActive(account.id, true);
+              onChanged?.();
+              return result;
+            }}
           >
             Reactivate
           </ConfirmButton>
@@ -52,7 +68,11 @@ export function AccountRow({ account, balance }: { account: Account; balance: nu
         <ConfirmButton
           className="text-danger hover:brightness-110"
           confirmMessage={`Delete "${account.name}"? If it has transactions it will be deactivated instead.`}
-          action={() => deleteAccount(account.id)}
+          action={async () => {
+            const result = await deleteAccount(account.id);
+            onChanged?.();
+            return result;
+          }}
         >
           Delete
         </ConfirmButton>

@@ -80,22 +80,6 @@ export const PAYMENT_METHODS = [
 
 export type PeriodKey = "today" | "week" | "month" | "year" | "custom";
 
-export type Role = {
-  id: string;
-  name: string;
-  is_system: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-export type PermAction = "view" | "create" | "edit" | "delete" | "sync" | "connect";
-
-export type Permission = {
-  id: string;
-  module: string;
-  action: PermAction;
-};
-
 export type AssetType =
   | "stock"
   | "etf"
@@ -120,7 +104,6 @@ export type InvestmentSource = "manual" | "zerodha";
 export type InvestmentHolding = {
   id: string;
   user_id: string;
-  broker_connection_id: string | null;
   source: InvestmentSource;
   instrument_name: string;
   asset_type: AssetType;
@@ -155,29 +138,3 @@ export type InvestmentTransaction = {
   updated_at: string;
 };
 
-export type BrokerName = "zerodha" | "upstox";
-
-export type BrokerConnectionStatus = "connected" | "disconnected" | "expired" | "error";
-
-export type BrokerConnection = {
-  id: string;
-  user_id: string;
-  broker: BrokerName;
-  status: BrokerConnectionStatus;
-  broker_user_id: string | null;
-  connected_at: string | null;
-  last_synced_at: string | null;
-  last_error: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type Profile = {
-  id: string;
-  full_name: string | null;
-  status: "active" | "inactive";
-  role_id: string | null;
-  must_change_password: boolean;
-  created_at: string;
-  updated_at: string;
-};

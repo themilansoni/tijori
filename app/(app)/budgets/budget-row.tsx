@@ -10,9 +10,11 @@ import type { Category } from "@/lib/types";
 export function BudgetRow({
   status,
   categories,
+  onChanged,
 }: {
   status: BudgetStatus;
   categories: Category[];
+  onChanged?: () => void;
 }) {
   const { budget, category, spent, remaining, usedPercent, isOverBudget, overBy } = status;
   const pct = Math.min(usedPercent, 100);
@@ -53,13 +55,17 @@ export function BudgetRow({
           trigger={<button className="text-muted hover:text-foreground">Edit</button>}
           title="Edit budget"
         >
-          <BudgetForm categories={categories} budget={budget} />
+          <BudgetForm categories={categories} budget={budget} onSuccess={onChanged} />
         </Modal>
         {budget.is_active ? (
           <ConfirmButton
             className="text-muted hover:text-foreground"
             confirmMessage={`Deactivate the ${category.name} budget?`}
-            action={() => setBudgetActive(budget.id, false)}
+            action={async () => {
+              const result = await setBudgetActive(budget.id, false);
+              onChanged?.();
+              return result;
+            }}
           >
             Deactivate
           </ConfirmButton>
@@ -67,7 +73,11 @@ export function BudgetRow({
           <ConfirmButton
             className="text-accent hover:brightness-110"
             confirmMessage={`Reactivate the ${category.name} budget?`}
-            action={() => setBudgetActive(budget.id, true)}
+            action={async () => {
+              const result = await setBudgetActive(budget.id, true);
+              onChanged?.();
+              return result;
+            }}
           >
             Reactivate
           </ConfirmButton>
@@ -75,7 +85,11 @@ export function BudgetRow({
         <ConfirmButton
           className="text-danger hover:brightness-110"
           confirmMessage={`Delete the ${category.name} budget?`}
-          action={() => deleteBudget(budget.id)}
+          action={async () => {
+            const result = await deleteBudget(budget.id);
+            onChanged?.();
+            return result;
+          }}
         >
           Delete
         </ConfirmButton>

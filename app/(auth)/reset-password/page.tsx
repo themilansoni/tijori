@@ -1,43 +1,59 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { Suspense, useActionState, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { updatePassword } from "@/lib/actions/auth";
+import { verifyPasswordResetCode, confirmPasswordReset } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
+import { firebaseAuthErrorMessage } from "@/lib/firebase/errors";
 import { Field, SubmitButton, FormError } from "@/components/ui/field";
 
 type Status = "checking" | "ready" | "invalid";
+type AuthState = { error?: string } | undefined;
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const oobCode = searchParams.get("oobCode");
   const [status, setStatus] = useState<Status>("checking");
-  const [state, formAction, pending] = useActionState(updatePassword, undefined);
 
   useEffect(() => {
-    const supabase = createClient();
+    if (!oobCode) {
+      setStatus("invalid");
+      return;
+    }
+    verifyPasswordResetCode(auth, oobCode)
+      .then(() => setStatus("ready"))
+      .catch(() => setStatus("invalid"));
+  }, [oobCode]);
 
-    // The recovery link's tokens land in the URL hash, which the browser
-    // client picks up automatically on load and turns into this event.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setStatus("ready");
-    });
+  async function updatePassword(_prevState: AuthState, formData: FormData): Promise<AuthState> {
+    const password = String(formData.get("password") ?? "");
+    const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
-    // Covers the case where the event already fired before this listener
-    // attached (a real race on fast connections).
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setStatus("ready");
-    });
+    if (!password) return { error: "Password is required." };
+    if (password.length < 8) return { error: "Password must be at least 8 characters." };
+    if (password !== confirmPassword) return { error: "Passwords do not match." };
 
-    const timeout = setTimeout(() => {
-      setStatus((current) => (current === "checking" ? "invalid" : current));
-    }, 3000);
+    try {
+      await confirmPasswordReset(auth, oobCode!, password);
+    } catch (err) {
+      return { error: firebaseAuthErrorMessage(err) };
+    }
 
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
-  }, []);
+    router.replace("/login");
+    return undefined;
+  }
+
+  const [state, formAction, pending] = useActionState(updatePassword, undefined);
 
   if (status === "checking") {
     return (
