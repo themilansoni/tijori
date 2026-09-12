@@ -194,14 +194,6 @@ export function TransactionForm({
         ))}
       </SelectField>
 
-      {type === "income" && (
-        <Field
-          label="Description (optional)"
-          name="description"
-          placeholder="September Salary"
-          defaultValue={transaction?.description ?? ""}
-        />
-      )}
 
       <TextareaField
         label="Note (optional)"
