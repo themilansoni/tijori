@@ -238,6 +238,22 @@ export function accountBalance(account: Account, allTransactions: Transaction[])
   return Number(account.opening_balance) + income - expense;
 }
 
+/**
+ * Credit card spending is borrowed money, not money leaving cash/bank right
+ * now — so it's kept out of the cash "Current Balance"/"Net Balance" totals
+ * and tracked separately as dues instead.
+ */
+export function isCashAccount(account: Account): boolean {
+  return account.type !== "credit_card";
+}
+
+/** Total amount currently owed across all credit card accounts. */
+export function totalCreditCardDues(accounts: Account[], allTransactions: Transaction[]): number {
+  return accounts
+    .filter((a) => a.type === "credit_card")
+    .reduce((sum, a) => sum + Math.max(0, -accountBalance(a, allTransactions)), 0);
+}
+
 export type AccountAmount = { account: Account; amount: number };
 
 /** Sum of `transactions` grouped by account (e.g. "income by account" for a period). */

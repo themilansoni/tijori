@@ -17,6 +17,8 @@ import {
   categorySpending,
   amountByAccount,
   accountBalance,
+  isCashAccount,
+  totalCreditCardDues,
   budgetStatus,
   incomeExpenseByDay,
   incomeExpenseByMonth,
@@ -112,7 +114,10 @@ function DashboardContent() {
   const netCashFlow = totalIncome - totalExpense;
 
   const activeAccounts = accounts.filter((a) => a.is_active);
-  const totalBalance = activeAccounts.reduce((sum, a) => sum + accountBalance(a, allTransactions), 0);
+  const totalBalance = activeAccounts
+    .filter(isCashAccount)
+    .reduce((sum, a) => sum + accountBalance(a, allTransactions), 0);
+  const creditCardDues = totalCreditCardDues(activeAccounts, allTransactions);
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));
   const activeBudgets = budgets.filter((b) => b.is_active && categoryById.has(b.category_id));
@@ -226,6 +231,12 @@ function DashboardContent() {
               <span>Net Balance</span>
               <span className={totalBalance < 0 ? "text-danger" : "text-success"}>{fmtCurrency(totalBalance)}</span>
             </div>
+            {creditCardDues > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted">Credit Card Dues</span>
+                <span className="text-danger">{fmtCurrency(creditCardDues)}</span>
+              </div>
+            )}
           </div>
         )}
       </section>

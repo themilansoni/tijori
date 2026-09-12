@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
 import { AccountForm } from "@/components/forms/account-form";
 import { AccountRow } from "./account-row";
-import { accountBalance, fmtCurrency } from "@/lib/calculations";
+import { accountBalance, isCashAccount, totalCreditCardDues, fmtCurrency } from "@/lib/calculations";
 import type { Account, Transaction } from "@/lib/types";
 
 export default function AccountsPage() {
@@ -43,7 +43,10 @@ export default function AccountsPage() {
   const inactive = accounts.filter((a) => !a.is_active);
 
   const balances = new Map(accounts.map((a) => [a.id, accountBalance(a, transactions)]));
-  const netBalance = active.reduce((sum, a) => sum + (balances.get(a.id) ?? 0), 0);
+  const netBalance = active
+    .filter(isCashAccount)
+    .reduce((sum, a) => sum + (balances.get(a.id) ?? 0), 0);
+  const creditCardDues = totalCreditCardDues(active, transactions);
 
   return (
     <div>
@@ -59,8 +62,11 @@ export default function AccountsPage() {
       </p>
 
       {active.length > 0 && (
-        <div className="mt-5">
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:inline-grid sm:auto-cols-max sm:grid-flow-col">
           <StatCard label="Net Balance" value={fmtCurrency(netBalance)} tone={netBalance < 0 ? "danger" : "success"} />
+          {creditCardDues > 0 && (
+            <StatCard label="Credit Card Dues" value={fmtCurrency(creditCardDues)} tone="danger" />
+          )}
         </div>
       )}
 
