@@ -5,7 +5,7 @@ import { createTransaction, updateTransaction } from "@/lib/actions/transactions
 import { createCategory } from "@/lib/actions/categories";
 import { Field, SelectField, TextareaField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
-import { PAYMENT_METHODS, type Account, type Category, type Transaction } from "@/lib/types";
+import type { Account, Category, Transaction } from "@/lib/types";
 
 const ADD_NEW_SENTINEL = "__add_new__";
 
@@ -194,27 +194,14 @@ export function TransactionForm({
         ))}
       </SelectField>
 
-      {type === "expense" && (
-        <SelectField
-          label="Payment method (optional)"
-          name="payment_method"
-          defaultValue={transaction?.payment_method ?? ""}
-        >
-          <option value="">Not specified</option>
-          {PAYMENT_METHODS.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </SelectField>
+      {type === "income" && (
+        <Field
+          label="Description (optional)"
+          name="description"
+          placeholder="September Salary"
+          defaultValue={transaction?.description ?? ""}
+        />
       )}
-
-      <Field
-        label="Description (optional)"
-        name="description"
-        placeholder={type === "income" ? "September Salary" : "Lunch with friends"}
-        defaultValue={transaction?.description ?? ""}
-      />
 
       <TextareaField
         label="Note (optional)"
