@@ -81,23 +81,43 @@ export const PAYMENT_METHODS = [
 export type PeriodKey = "today" | "week" | "month" | "year" | "custom";
 
 export type AssetType =
-  | "stock"
+  | "equity"
   | "etf"
   | "mutual_fund"
   | "bond"
   | "gold"
   | "fixed_deposit"
+  | "recurring_deposit"
+  | "provident_fund"
+  | "ppf"
+  | "real_estate"
   | "other";
 
 export const ASSET_TYPES: { value: AssetType; label: string }[] = [
-  { value: "stock", label: "Stock" },
+  { value: "equity", label: "Equity" },
   { value: "etf", label: "ETF" },
   { value: "mutual_fund", label: "Mutual Fund" },
   { value: "bond", label: "Bond" },
   { value: "gold", label: "Gold" },
   { value: "fixed_deposit", label: "Fixed Deposit" },
+  { value: "recurring_deposit", label: "Recurring Deposit" },
+  { value: "provident_fund", label: "Provident Fund (PF)" },
+  { value: "ppf", label: "PPF" },
+  { value: "real_estate", label: "Real Estate / Home" },
   { value: "other", label: "Other" },
 ];
+
+/** Types tracked as quantity × price. Everything else is a lump-sum value the user updates by hand. */
+const QUANTITY_BASED_TYPES: AssetType[] = ["equity", "etf", "mutual_fund", "bond", "gold", "other"];
+export function isQuantityBasedAsset(type: AssetType): boolean {
+  return QUANTITY_BASED_TYPES.includes(type);
+}
+
+/** Interest-bearing lump-sum types where a rate/maturity date are meaningful. */
+const INTEREST_BEARING_TYPES: AssetType[] = ["fixed_deposit", "recurring_deposit", "provident_fund", "ppf"];
+export function isInterestBearingAsset(type: AssetType): boolean {
+  return INTEREST_BEARING_TYPES.includes(type);
+}
 
 export type InvestmentSource = "manual" | "zerodha";
 
@@ -115,6 +135,8 @@ export type InvestmentHolding = {
   current_price: number | null;
   price_source: "manual" | "zerodha";
   last_price_update: string | null;
+  interest_rate: number | null;
+  maturity_date: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -138,3 +160,13 @@ export type InvestmentTransaction = {
   updated_at: string;
 };
 
+export type FireProfile = {
+  current_age: number;
+  retirement_age: number;
+  monthly_expenses: number;
+  monthly_investment: number;
+  expected_return_percent: number;
+  inflation_percent: number;
+  safe_withdrawal_percent: number;
+  updated_at: string;
+};

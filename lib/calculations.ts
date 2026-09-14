@@ -376,3 +376,64 @@ export function nextBudgetStartExample(period: BudgetPeriod, today: Date): Date 
       return addYears(today, 1);
   }
 }
+
+/** FIRE number = the corpus that sustains `annualExpenses` at the given safe withdrawal rate. */
+export function calculateFireNumber(annualExpenses: number, swrPercent: number): number {
+  if (swrPercent <= 0) return Infinity;
+  return annualExpenses / (swrPercent / 100);
+}
+
+export type FireProjectionPoint = {
+  year: number;
+  age: number;
+  corpus: number;
+  fireTarget: number;
+};
+
+export type FireProjection = {
+  points: FireProjectionPoint[];
+  fireAge: number | null;
+  fireYear: number | null;
+};
+
+/**
+ * Year-by-year projection of corpus growth against an inflating FIRE target.
+ * Year 0 is today. Each subsequent year the corpus grows at the expected
+ * return and picks up a year of contributions; expenses (and so the target)
+ * grow with inflation.
+ */
+export function projectFire(params: {
+  currentAge: number;
+  currentCorpus: number;
+  monthlyExpenses: number;
+  monthlyInvestment: number;
+  expectedReturnPercent: number;
+  inflationPercent: number;
+  swrPercent: number;
+  maxYears?: number;
+}): FireProjection {
+  const { currentAge, currentCorpus, monthlyExpenses, monthlyInvestment, expectedReturnPercent, inflationPercent, swrPercent } =
+    params;
+  const maxYears = params.maxYears ?? 60;
+
+  const points: FireProjectionPoint[] = [];
+  let corpus = currentCorpus;
+  let annualExpenses = monthlyExpenses * 12;
+  let fireAge: number | null = null;
+  let fireYear: number | null = null;
+
+  for (let year = 0; year <= maxYears; year++) {
+    const fireTarget = calculateFireNumber(annualExpenses, swrPercent);
+    points.push({ year, age: currentAge + year, corpus, fireTarget });
+
+    if (fireAge == null && corpus >= fireTarget) {
+      fireAge = currentAge + year;
+      fireYear = year;
+    }
+
+    corpus = corpus * (1 + expectedReturnPercent / 100) + monthlyInvestment * 12;
+    annualExpenses = annualExpenses * (1 + inflationPercent / 100);
+  }
+
+  return { points, fireAge, fireYear };
+}

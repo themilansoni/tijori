@@ -13,9 +13,21 @@ import {
 import { db } from "@/lib/firebase/client";
 import { requireUid } from "@/lib/firebase/require-user";
 import type { ActionResult } from "./categories";
-import type { AssetType, InvestmentHolding, InvestmentTxType } from "@/lib/types";
+import { isQuantityBasedAsset, type AssetType, type InvestmentHolding, type InvestmentTxType } from "@/lib/types";
 
-const ASSET_TYPES: AssetType[] = ["stock", "etf", "mutual_fund", "bond", "gold", "fixed_deposit", "other"];
+const ASSET_TYPES: AssetType[] = [
+  "equity",
+  "etf",
+  "mutual_fund",
+  "bond",
+  "gold",
+  "fixed_deposit",
+  "recurring_deposit",
+  "provident_fund",
+  "ppf",
+  "real_estate",
+  "other",
+];
 const TX_TYPES: InvestmentTxType[] = ["buy", "sell", "dividend", "bonus", "split"];
 
 type ParsedHolding = {
@@ -27,6 +39,8 @@ type ParsedHolding = {
   quantity: number;
   average_buy_price: number;
   current_price: number | null;
+  interest_rate: number | null;
+  maturity_date: string | null;
 };
 
 function parseHoldingForm(formData: FormData): { error: string } | { data: ParsedHolding } {
@@ -35,23 +49,48 @@ function parseHoldingForm(formData: FormData): { error: string } | { data: Parse
   const symbol = String(formData.get("symbol") ?? "").trim() || null;
   const isin = String(formData.get("isin") ?? "").trim() || null;
   const exchange = String(formData.get("exchange") ?? "").trim() || null;
-  const quantity = Number(formData.get("quantity"));
   const average_buy_price = Number(formData.get("average_buy_price"));
   const currentPriceRaw = String(formData.get("current_price") ?? "").trim();
   const current_price = currentPriceRaw ? Number(currentPriceRaw) : null;
+  const interestRateRaw = String(formData.get("interest_rate") ?? "").trim();
+  const interest_rate = interestRateRaw ? Number(interestRateRaw) : null;
+  const maturity_date = String(formData.get("maturity_date") ?? "").trim() || null;
 
   if (!instrument_name) return { error: "Name is required." } as const;
   if (!ASSET_TYPES.includes(asset_type)) return { error: "Invalid asset type." } as const;
-  if (!Number.isFinite(quantity) || quantity <= 0) return { error: "Quantity must be greater than 0." } as const;
+
+  const quantityBased = isQuantityBasedAsset(asset_type);
+  const quantity = quantityBased ? Number(formData.get("quantity")) : 1;
+
+  if (quantityBased && (!Number.isFinite(quantity) || quantity <= 0)) {
+    return { error: "Quantity must be greater than 0." } as const;
+  }
   if (!Number.isFinite(average_buy_price) || average_buy_price < 0) {
-    return { error: "Average buy price must be 0 or more." } as const;
+    return { error: quantityBased ? "Average buy price must be 0 or more." : "Invested amount must be 0 or more." } as const;
+  }
+  if (!quantityBased && current_price == null) {
+    return { error: "Current value is required." } as const;
   }
   if (current_price != null && (!Number.isFinite(current_price) || current_price < 0)) {
     return { error: "Current price must be 0 or more." } as const;
   }
+  if (interest_rate != null && (!Number.isFinite(interest_rate) || interest_rate < 0)) {
+    return { error: "Interest rate must be 0 or more." } as const;
+  }
 
   return {
-    data: { instrument_name, asset_type, symbol, isin, exchange, quantity, average_buy_price, current_price },
+    data: {
+      instrument_name,
+      asset_type,
+      symbol,
+      isin,
+      exchange,
+      quantity,
+      average_buy_price,
+      current_price,
+      interest_rate,
+      maturity_date,
+    },
   } as const;
 }
 

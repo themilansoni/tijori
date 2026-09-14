@@ -14,7 +14,7 @@ import {
   calculatePnLPercentage,
   fmtCurrency,
 } from "@/lib/calculations";
-import { ASSET_TYPES, type Account, type InvestmentHolding } from "@/lib/types";
+import { ASSET_TYPES, isQuantityBasedAsset, type Account, type InvestmentHolding } from "@/lib/types";
 
 type SortKey = "name" | "currentValue" | "invested" | "pnl" | "pnlPercent";
 
@@ -94,12 +94,14 @@ export function HoldingsTable({
         <tbody className="divide-y divide-border">
           {rows.map(({ holding, invested, currentValue, pnl, pnlPercent }) => {
             const typeLabel = ASSET_TYPES.find((t) => t.value === holding.asset_type)?.label ?? holding.asset_type;
+            const quantityBased = isQuantityBasedAsset(holding.asset_type);
             return (
               <tr key={holding.id} className={holding.is_active ? "" : "opacity-50"}>
                 <td className="px-4 py-3">
                   <div className="font-medium">{holding.instrument_name}</div>
                   <div className="text-[11px] text-muted">
-                    {typeLabel} · {Number(holding.quantity).toLocaleString("en-IN")} qty
+                    {typeLabel}
+                    {quantityBased && ` · ${Number(holding.quantity).toLocaleString("en-IN")} qty`}
                     {holding.source === "zerodha" && " · Zerodha"}
                     {!holding.is_active && " · inactive"}
                   </div>
@@ -120,9 +122,11 @@ export function HoldingsTable({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2.5 whitespace-nowrap text-xs">
-                    <Modal trigger={<Button size="sm">+ Txn</Button>} title={`Record transaction — ${holding.instrument_name}`}>
-                      <InvestmentTransactionForm holding={holding} accounts={accounts} onSuccess={onChanged} />
-                    </Modal>
+                    {quantityBased && (
+                      <Modal trigger={<Button size="sm">+ Txn</Button>} title={`Record transaction — ${holding.instrument_name}`}>
+                        <InvestmentTransactionForm holding={holding} accounts={accounts} onSuccess={onChanged} />
+                      </Modal>
+                    )}
                     {holding.source === "manual" && (
                       <Modal
                         trigger={<button className="text-muted hover:text-foreground">Edit</button>}

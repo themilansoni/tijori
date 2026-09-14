@@ -55,8 +55,8 @@ export default function InvestmentsPage() {
         </Modal>
       </div>
       <p className="mt-2 text-muted">
-        Track stocks, funds, and other investments by hand — every figure here is computed from
-        quantity × price, never estimated.
+        Track equity, funds, gold, FDs, RDs, PF, PPF, real estate, and anything else you hold —
+        every figure here is computed from what you enter, never estimated.
       </p>
 
       {holdings.length > 0 && (
@@ -81,7 +81,7 @@ export default function InvestmentsPage() {
         {holdings.length === 0 ? (
           <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-12 text-center">
             <p className="mt-4 font-medium text-foreground">No investments yet</p>
-            <p className="mt-1 text-[13.5px] text-muted">Add a stock, fund, or other investment by hand.</p>
+            <p className="mt-1 text-[13.5px] text-muted">Add a stock, fund, deposit, or any other investment by hand.</p>
             <div className="mt-4">
               <Modal trigger={<Button>+ Add investment</Button>} title="Add investment">
                 <ManualHoldingForm onSuccess={load} />
