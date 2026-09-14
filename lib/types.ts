@@ -108,7 +108,7 @@ export const ASSET_TYPES: { value: AssetType; label: string }[] = [
 ];
 
 /** Types tracked as quantity × price. Everything else is a lump-sum value the user updates by hand. */
-const QUANTITY_BASED_TYPES: AssetType[] = ["equity", "etf", "mutual_fund", "bond", "gold", "other"];
+const QUANTITY_BASED_TYPES: AssetType[] = ["equity", "etf", "mutual_fund", "bond", "gold"];
 export function isQuantityBasedAsset(type: AssetType): boolean {
   return QUANTITY_BASED_TYPES.includes(type);
 }
@@ -117,6 +117,11 @@ export function isQuantityBasedAsset(type: AssetType): boolean {
 const INTEREST_BEARING_TYPES: AssetType[] = ["fixed_deposit", "recurring_deposit", "provident_fund", "ppf"];
 export function isInterestBearingAsset(type: AssetType): boolean {
   return INTEREST_BEARING_TYPES.includes(type);
+}
+
+/** "Other" is a lump-sum type too, but simpler still: just a name and one amount, no invested-vs-current split. */
+export function isSimpleAmountAsset(type: AssetType): boolean {
+  return type === "other";
 }
 
 export type InvestmentSource = "manual" | "zerodha";

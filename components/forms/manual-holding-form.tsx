@@ -4,7 +4,14 @@ import { useState, useTransition } from "react";
 import { createManualHolding, updateManualHolding } from "@/lib/actions/investments";
 import { Field, SelectField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
-import { ASSET_TYPES, isQuantityBasedAsset, isInterestBearingAsset, type AssetType, type InvestmentHolding } from "@/lib/types";
+import {
+  ASSET_TYPES,
+  isQuantityBasedAsset,
+  isInterestBearingAsset,
+  isSimpleAmountAsset,
+  type AssetType,
+  type InvestmentHolding,
+} from "@/lib/types";
 
 export function ManualHoldingForm({
   holding,
@@ -17,9 +24,11 @@ export function ManualHoldingForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>();
   const [assetType, setAssetType] = useState<AssetType>(holding?.asset_type ?? "equity");
+  const [amount, setAmount] = useState(holding?.average_buy_price != null ? String(holding.average_buy_price) : "");
 
   const quantityBased = isQuantityBasedAsset(assetType);
   const interestBearing = isInterestBearingAsset(assetType);
+  const simpleAmount = isSimpleAmountAsset(assetType);
 
   function handleSubmit(formData: FormData) {
     setError(undefined);
@@ -41,7 +50,7 @@ export function ManualHoldingForm({
       <Field
         label="Investment name"
         name="instrument_name"
-        placeholder={quantityBased ? "e.g. HDFC Bank" : "e.g. SBI FD — 3yr"}
+        placeholder={quantityBased ? "e.g. HDFC Bank" : simpleAmount ? "e.g. Cash at home" : "e.g. SBI FD — 3yr"}
         defaultValue={holding?.instrument_name}
         required
         autoFocus
@@ -104,6 +113,22 @@ export function ManualHoldingForm({
           <p className="mt-1.5 text-[12px] text-muted">
             Labeled &quot;Manual&quot; on the dashboard — update it yourself whenever you check the price.
           </p>
+        </>
+      ) : simpleAmount ? (
+        <>
+          <input type="hidden" name="quantity" value="1" />
+          <input type="hidden" name="current_price" value={amount} />
+          <Field
+            label="Amount (₹)"
+            name="average_buy_price"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="25000"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
         </>
       ) : (
         <>
