@@ -12,7 +12,10 @@ let loading: Promise<NseEquity[]> | null = null;
 async function loadEquities(): Promise<NseEquity[]> {
   if (cache) return cache;
   if (!loading) {
-    loading = fetch("/data/nse-equities.json")
+    // Firebase Hosting caches this file for an hour; "no-cache" forces the
+    // browser to revalidate with the server (a fast 304 if unchanged) rather
+    // than silently reusing a stale copy of the dataset for that whole hour.
+    loading = fetch("/data/nse-equities.json", { cache: "no-cache" })
       .then((r) => r.json())
       .then((data: NseEquity[]) => {
         cache = data;
