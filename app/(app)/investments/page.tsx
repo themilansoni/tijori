@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { mapDocs } from "@/lib/firebase/collection-helpers";
 import { useAuth } from "@/lib/auth-context";
+import { refreshEquityPrices } from "@/lib/actions/prices";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
@@ -19,6 +20,8 @@ export default function InvestmentsPage() {
   const [loading, setLoading] = useState(true);
   const [holdings, setHoldings] = useState<InvestmentHolding[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [refreshing, startRefresh] = useTransition();
+  const [refreshMessage, setRefreshMessage] = useState<string | undefined>();
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -41,19 +44,47 @@ export default function InvestmentsPage() {
     load();
   }, [load]);
 
+  function handleRefreshPrices() {
+    setRefreshMessage(undefined);
+    startRefresh(async () => {
+      const result = await refreshEquityPrices();
+      if ("error" in result) {
+        setRefreshMessage(result.error);
+        return;
+      }
+      setRefreshMessage(
+        result.skipped.length > 0
+          ? `Updated ${result.updated.length} — couldn't find a price for ${result.skipped.join(", ")}.`
+          : `Updated ${result.updated.length} price${result.updated.length === 1 ? "" : "s"}.`
+      );
+      await load();
+    });
+  }
+
   if (authLoading || loading) return null;
 
   const totals = calculateTotalPortfolioValue(holdings);
   const allocation = calculatePortfolioAllocation(holdings);
+  const hasRefreshableHoldings = holdings.some(
+    (h) => h.is_active && (h.asset_type === "equity" || h.asset_type === "etf") && h.symbol
+  );
 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Investments</h1>
-        <Modal trigger={<Button>+ Add investment</Button>} title="Add investment">
-          <ManualHoldingForm onSuccess={load} />
-        </Modal>
+        <div className="flex items-center gap-2.5">
+          {hasRefreshableHoldings && (
+            <Button variant="ghost" onClick={handleRefreshPrices} disabled={refreshing}>
+              {refreshing ? "Refreshing…" : "Refresh prices"}
+            </Button>
+          )}
+          <Modal trigger={<Button>+ Add investment</Button>} title="Add investment">
+            <ManualHoldingForm onSuccess={load} />
+          </Modal>
+        </div>
       </div>
+      {refreshMessage && <p className="mt-2 text-[13px] text-muted">{refreshMessage}</p>}
       <p className="mt-2 text-muted">
         Track equity, funds, gold, FDs, RDs, PF, PPF, real estate, and anything else you hold —
         every figure here is computed from what you enter, never estimated.

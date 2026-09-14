@@ -70,10 +70,17 @@ export function ManualHoldingForm({
       </SelectField>
 
       {quantityBased && (
-        <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
-          <Field label="Symbol (optional)" name="symbol" placeholder="HDFCBANK" defaultValue={holding?.symbol ?? ""} />
-          <Field label="ISIN (optional)" name="isin" placeholder="INE040A01034" defaultValue={holding?.isin ?? ""} />
-        </div>
+        <>
+          <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
+            <Field label="Symbol (optional)" name="symbol" placeholder="HDFCBANK" defaultValue={holding?.symbol ?? ""} />
+            <Field label="ISIN (optional)" name="isin" placeholder="INE040A01034" defaultValue={holding?.isin ?? ""} />
+          </div>
+          {(assetType === "equity" || assetType === "etf") && (
+            <p className="mt-1.5 text-[12px] text-muted">
+              NSE trading symbol — set this to use &quot;Refresh prices&quot; for live prices later.
+            </p>
+          )}
+        </>
       )}
 
       {quantityBased ? (
