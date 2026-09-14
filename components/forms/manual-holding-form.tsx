@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { createManualHolding, updateManualHolding } from "@/lib/actions/investments";
 import { refreshHoldingPrice, lookupEquityPrice } from "@/lib/actions/prices";
+import { createHouseholdMember } from "@/lib/actions/household";
 import { Field, SelectField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
 import { EquitySearchField } from "@/components/forms/equity-search-field";
@@ -17,9 +18,11 @@ import {
   type InvestmentHolding,
 } from "@/lib/types";
 
+const ADD_INVESTOR_SENTINEL = "__add_investor__";
+
 export function ManualHoldingForm({
   holding,
-  members = [],
+  members: initialMembers = [],
   onSuccess,
 }: {
   holding?: InvestmentHolding;
@@ -36,6 +39,46 @@ export function ManualHoldingForm({
   const [isin, setIsin] = useState(holding?.isin ?? "");
   const [currentPrice, setCurrentPrice] = useState(holding?.current_price != null ? String(holding.current_price) : "");
   const [priceFetching, setPriceFetching] = useState(false);
+
+  const [members, setMembers] = useState(initialMembers);
+  const [ownerId, setOwnerId] = useState(holding?.owner_id ?? "");
+  const [addingMember, setAddingMember] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+  const [memberError, setMemberError] = useState<string | undefined>();
+  const [memberPending, startMemberTransition] = useTransition();
+
+  function handleOwnerChange(value: string) {
+    if (value === ADD_INVESTOR_SENTINEL) {
+      setAddingMember(true);
+      setMemberError(undefined);
+      return;
+    }
+    setOwnerId(value);
+  }
+
+  function handleAddMember() {
+    const name = newMemberName.trim();
+    if (!name) {
+      setMemberError("Name is required.");
+      return;
+    }
+    setMemberError(undefined);
+
+    const formData = new FormData();
+    formData.set("name", name);
+
+    startMemberTransition(async () => {
+      const result = await createHouseholdMember(formData);
+      if ("error" in result) {
+        setMemberError(result.error);
+        return;
+      }
+      setMembers((prev) => [...prev, result.member]);
+      setOwnerId(result.member.id);
+      setAddingMember(false);
+      setNewMemberName("");
+    });
+  }
 
   const quantityBased = isQuantityBasedAsset(assetType);
   const interestBearing = isInterestBearingAsset(assetType);
@@ -111,19 +154,57 @@ export function ManualHoldingForm({
         ))}
       </SelectField>
 
-      {members.length > 0 ? (
-        <SelectField label="Investor (optional)" name="owner_id" defaultValue={holding?.owner_id ?? ""}>
-          <option value="">Unassigned</option>
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </SelectField>
-      ) : (
-        <p className="mt-5 text-[12px] text-muted">
-          Add household members in Settings to tag investments by person and see individual net worth.
-        </p>
+      <SelectField
+        label="Investor (optional)"
+        name="owner_id"
+        value={ownerId}
+        onChange={(e) => handleOwnerChange(e.target.value)}
+      >
+        <option value="">Unassigned</option>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+        <option value={ADD_INVESTOR_SENTINEL} style={{ color: "var(--accent)" }}>
+          + Add investor
+        </option>
+      </SelectField>
+
+      {addingMember && (
+        <div className="mt-2 rounded-[10px] border border-accent/35 bg-surface-2 p-3">
+          <div className="text-[11.5px] font-medium tracking-[0.2px] text-muted">Add investor</div>
+          <input
+            type="text"
+            value={newMemberName}
+            onChange={(e) => setNewMemberName(e.target.value)}
+            placeholder="e.g. Me, or your name"
+            autoFocus
+            className="mt-2 w-full rounded-[9px] border border-border bg-surface px-[13px] py-2.5 text-[14px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(79,70,229,0.16)]"
+          />
+          {memberError && <p className="mt-2 text-[12px] text-danger">{memberError}</p>}
+          <div className="mt-2.5 flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAddingMember(false);
+                setNewMemberName("");
+                setMemberError(undefined);
+              }}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={memberPending}
+              onClick={handleAddMember}
+              className="rounded-lg bg-accent px-3 py-1.5 text-xs font-bold text-accent-foreground transition hover:brightness-105 disabled:opacity-60"
+            >
+              {memberPending ? "Adding…" : "Add Investor"}
+            </button>
+          </div>
+        </div>
       )}
 
       {quantityBased && (
