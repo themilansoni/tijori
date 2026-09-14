@@ -52,6 +52,9 @@ export function ManualHoldingForm({
           setError(result.error);
           return;
         }
+        if (nseSearchable && symbol) {
+          await refreshHoldingPrice(holding.id, symbol);
+        }
       } else {
         const result = await createManualHolding(formData);
         if ("error" in result) {

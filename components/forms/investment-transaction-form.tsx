@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { recordInvestmentTransaction } from "@/lib/actions/investments";
+import { refreshHoldingPrice } from "@/lib/actions/prices";
 import { Field, SelectField, TextareaField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
 import type { Account, InvestmentHolding, InvestmentTxType } from "@/lib/types";
@@ -35,6 +36,9 @@ export function InvestmentTransactionForm({
       if ("error" in result) {
         setError(result.error);
         return;
+      }
+      if ((holding.asset_type === "equity" || holding.asset_type === "etf") && holding.symbol) {
+        await refreshHoldingPrice(holding.id, holding.symbol);
       }
       onSuccess?.();
       close();
