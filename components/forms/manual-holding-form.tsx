@@ -13,14 +13,17 @@ import {
   isInterestBearingAsset,
   isSimpleAmountAsset,
   type AssetType,
+  type HouseholdMember,
   type InvestmentHolding,
 } from "@/lib/types";
 
 export function ManualHoldingForm({
   holding,
+  members = [],
   onSuccess,
 }: {
   holding?: InvestmentHolding;
+  members?: HouseholdMember[];
   onSuccess?: () => void;
 }) {
   const { close } = useModal();
@@ -107,6 +110,21 @@ export function ManualHoldingForm({
           </option>
         ))}
       </SelectField>
+
+      {members.length > 0 ? (
+        <SelectField label="Investor (optional)" name="owner_id" defaultValue={holding?.owner_id ?? ""}>
+          <option value="">Unassigned</option>
+          {members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </SelectField>
+      ) : (
+        <p className="mt-5 text-[12px] text-muted">
+          Add household members in Settings to tag investments by person and see individual net worth.
+        </p>
+      )}
 
       {quantityBased && (
         <>

@@ -13,23 +13,28 @@ import { ManualHoldingForm } from "@/components/forms/manual-holding-form";
 import { HoldingsTable } from "./holdings-table";
 import { AllocationBreakdown } from "./allocation-breakdown";
 import { calculateTotalPortfolioValue, calculatePortfolioAllocation, fmtCurrency } from "@/lib/calculations";
-import type { Account, InvestmentHolding } from "@/lib/types";
+import type { Account, HouseholdMember, InvestmentHolding } from "@/lib/types";
+
+const UNASSIGNED = "__unassigned__";
 
 export default function InvestmentsPage() {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [holdings, setHoldings] = useState<InvestmentHolding[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [refreshing, startRefresh] = useTransition();
   const [refreshMessage, setRefreshMessage] = useState<string | undefined>();
+  const [ownerFilter, setOwnerFilter] = useState<string | null>(null); // null = everyone
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const uid = user.uid;
-    const [holdingSnap, accSnap] = await Promise.all([
+    const [holdingSnap, accSnap, memberSnap] = await Promise.all([
       getDocs(collection(db, "users", uid, "investmentHoldings")),
       getDocs(collection(db, "users", uid, "accounts")),
+      getDocs(collection(db, "users", uid, "householdMembers")),
     ]);
     setHoldings(mapDocs<InvestmentHolding>(holdingSnap).sort((a, b) => a.created_at.localeCompare(b.created_at)));
     setAccounts(
@@ -37,6 +42,7 @@ export default function InvestmentsPage() {
         .filter((a) => a.is_active)
         .sort((a, b) => a.name.localeCompare(b.name))
     );
+    setMembers(mapDocs<HouseholdMember>(memberSnap).sort((a, b) => a.created_at.localeCompare(b.created_at)));
     setLoading(false);
   }, [user]);
 
@@ -63,8 +69,15 @@ export default function InvestmentsPage() {
 
   if (authLoading || loading) return null;
 
-  const totals = calculateTotalPortfolioValue(holdings);
-  const allocation = calculatePortfolioAllocation(holdings);
+  const visibleHoldings =
+    ownerFilter == null
+      ? holdings
+      : ownerFilter === UNASSIGNED
+      ? holdings.filter((h) => !h.owner_id)
+      : holdings.filter((h) => h.owner_id === ownerFilter);
+
+  const totals = calculateTotalPortfolioValue(visibleHoldings);
+  const allocation = calculatePortfolioAllocation(visibleHoldings);
   const hasRefreshableHoldings = holdings.some(
     (h) => h.is_active && (h.asset_type === "equity" || h.asset_type === "etf") && h.symbol
   );
@@ -80,7 +93,7 @@ export default function InvestmentsPage() {
             </Button>
           )}
           <Modal trigger={<Button>+ Add investment</Button>} title="Add investment">
-            <ManualHoldingForm onSuccess={load} />
+            <ManualHoldingForm members={members} onSuccess={load} />
           </Modal>
         </div>
       </div>
@@ -89,6 +102,10 @@ export default function InvestmentsPage() {
         Track equity, funds, gold, FDs, RDs, PF, PPF, real estate, and anything else you hold —
         every figure here is computed from what you enter, never estimated.
       </p>
+
+      {members.length > 0 && holdings.length > 0 && (
+        <NetWorthByPerson holdings={holdings} members={members} ownerFilter={ownerFilter} onSelect={setOwnerFilter} />
+      )}
 
       {holdings.length > 0 && (
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -109,18 +126,20 @@ export default function InvestmentsPage() {
       )}
 
       <div className="mt-6">
-        {holdings.length === 0 ? (
+        {visibleHoldings.length === 0 ? (
           <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-12 text-center">
-            <p className="mt-4 font-medium text-foreground">No investments yet</p>
+            <p className="mt-4 font-medium text-foreground">
+              {holdings.length === 0 ? "No investments yet" : "No investments for this person"}
+            </p>
             <p className="mt-1 text-[13.5px] text-muted">Add a stock, fund, deposit, or any other investment by hand.</p>
             <div className="mt-4">
               <Modal trigger={<Button>+ Add investment</Button>} title="Add investment">
-                <ManualHoldingForm onSuccess={load} />
+                <ManualHoldingForm members={members} onSuccess={load} />
               </Modal>
             </div>
           </div>
         ) : (
-          <HoldingsTable holdings={holdings} accounts={accounts} onChanged={load} />
+          <HoldingsTable holdings={visibleHoldings} accounts={accounts} members={members} onChanged={load} />
         )}
       </div>
 
@@ -129,6 +148,64 @@ export default function InvestmentsPage() {
           <AllocationBreakdown allocation={allocation} />
         </div>
       )}
+    </div>
+  );
+}
+
+function NetWorthByPerson({
+  holdings,
+  members,
+  ownerFilter,
+  onSelect,
+}: {
+  holdings: InvestmentHolding[];
+  members: HouseholdMember[];
+  ownerFilter: string | null;
+  onSelect: (ownerId: string | null) => void;
+}) {
+  const householdTotal = calculateTotalPortfolioValue(holdings).currentValue;
+  const hasUnassigned = holdings.some((h) => !h.owner_id);
+
+  const rows = [
+    ...members.map((m) => ({
+      id: m.id,
+      name: m.name,
+      value: calculateTotalPortfolioValue(holdings.filter((h) => h.owner_id === m.id)).currentValue,
+    })),
+    ...(hasUnassigned
+      ? [{ id: UNASSIGNED, name: "Unassigned", value: calculateTotalPortfolioValue(holdings.filter((h) => !h.owner_id)).currentValue }]
+      : []),
+  ];
+
+  return (
+    <div className="mt-5 rounded-xl border border-border bg-surface p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-muted">Net Worth by Person</h2>
+        <span className="text-xs text-muted">Household: {fmtCurrency(householdTotal)}</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onSelect(null)}
+          className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-medium transition ${
+            ownerFilter == null ? "bg-accent text-accent-foreground" : "bg-surface-2 text-muted hover:text-foreground"
+          }`}
+        >
+          All · {fmtCurrency(householdTotal)}
+        </button>
+        {rows.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            onClick={() => onSelect(r.id)}
+            className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-medium transition ${
+              ownerFilter === r.id ? "bg-accent text-accent-foreground" : "bg-surface-2 text-muted hover:text-foreground"
+            }`}
+          >
+            {r.name} · {fmtCurrency(r.value)}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

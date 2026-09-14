@@ -142,9 +142,17 @@ export type InvestmentHolding = {
   last_price_update: string | null;
   interest_rate: number | null;
   maturity_date: string | null;
+  owner_id: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type HouseholdMember = {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
 };
 
 export type InvestmentTxType = "buy" | "sell" | "dividend" | "bonus" | "split";

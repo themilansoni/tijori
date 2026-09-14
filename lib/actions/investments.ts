@@ -41,6 +41,7 @@ type ParsedHolding = {
   current_price: number | null;
   interest_rate: number | null;
   maturity_date: string | null;
+  owner_id: string | null;
 };
 
 function parseHoldingForm(formData: FormData): { error: string } | { data: ParsedHolding } {
@@ -55,6 +56,7 @@ function parseHoldingForm(formData: FormData): { error: string } | { data: Parse
   const interestRateRaw = String(formData.get("interest_rate") ?? "").trim();
   const interest_rate = interestRateRaw ? Number(interestRateRaw) : null;
   const maturity_date = String(formData.get("maturity_date") ?? "").trim() || null;
+  const owner_id = String(formData.get("owner_id") ?? "").trim() || null;
 
   if (!instrument_name) return { error: "Name is required." } as const;
   if (!ASSET_TYPES.includes(asset_type)) return { error: "Invalid asset type." } as const;
@@ -90,6 +92,7 @@ function parseHoldingForm(formData: FormData): { error: string } | { data: Parse
       current_price,
       interest_rate,
       maturity_date,
+      owner_id,
     },
   } as const;
 }

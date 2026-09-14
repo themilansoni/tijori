@@ -14,19 +14,22 @@ import {
   calculatePnLPercentage,
   fmtCurrency,
 } from "@/lib/calculations";
-import { ASSET_TYPES, isQuantityBasedAsset, type Account, type InvestmentHolding } from "@/lib/types";
+import { ASSET_TYPES, isQuantityBasedAsset, type Account, type HouseholdMember, type InvestmentHolding } from "@/lib/types";
 
 type SortKey = "name" | "currentValue" | "invested" | "pnl" | "pnlPercent";
 
 export function HoldingsTable({
   holdings,
   accounts,
+  members = [],
   onChanged,
 }: {
   holdings: InvestmentHolding[];
   accounts: Account[];
+  members?: HouseholdMember[];
   onChanged?: () => void;
 }) {
+  const memberById = new Map(members.map((m) => [m.id, m]));
   const [sortKey, setSortKey] = useState<SortKey>("currentValue");
   const [sortDesc, setSortDesc] = useState(true);
 
@@ -102,6 +105,7 @@ export function HoldingsTable({
                   <div className="text-[11px] text-muted">
                     {typeLabel}
                     {quantityBased && ` · ${Number(holding.quantity).toLocaleString("en-IN")} qty`}
+                    {holding.owner_id && memberById.has(holding.owner_id) && ` · ${memberById.get(holding.owner_id)!.name}`}
                     {holding.source === "zerodha" && " · Zerodha"}
                     {!holding.is_active && " · inactive"}
                   </div>
@@ -132,7 +136,7 @@ export function HoldingsTable({
                         trigger={<button className="text-muted hover:text-foreground">Edit</button>}
                         title="Edit investment"
                       >
-                        <ManualHoldingForm holding={holding} onSuccess={onChanged} />
+                        <ManualHoldingForm holding={holding} members={members} onSuccess={onChanged} />
                       </Modal>
                     )}
                     {holding.is_active ? (
