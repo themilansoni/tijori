@@ -61,7 +61,7 @@ export function ManualHoldingForm({
       </SelectField>
 
       {quantityBased && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
           <Field label="Symbol (optional)" name="symbol" placeholder="HDFCBANK" defaultValue={holding?.symbol ?? ""} />
           <Field label="ISIN (optional)" name="isin" placeholder="INE040A01034" defaultValue={holding?.isin ?? ""} />
         </div>
@@ -69,7 +69,7 @@ export function ManualHoldingForm({
 
       {quantityBased ? (
         <>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
             <Field
               label="Quantity"
               name="quantity"
@@ -108,7 +108,7 @@ export function ManualHoldingForm({
       ) : (
         <>
           <input type="hidden" name="quantity" value="1" />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
             <Field
               label="Invested amount (₹)"
               name="average_buy_price"
@@ -135,7 +135,7 @@ export function ManualHoldingForm({
           </p>
 
           {interestBearing && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
               <Field
                 label="Interest rate (%, optional)"
                 name="interest_rate"

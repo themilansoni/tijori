@@ -29,7 +29,7 @@ export function FireProfileForm({
 
   return (
     <form action={handleSubmit}>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 [&>label]:!mt-0">
         <Field
           label="Current age"
           name="current_age"
@@ -73,7 +73,7 @@ export function FireProfileForm({
       />
       <p className="mt-1.5 text-[12px] text-muted">How much you're currently adding to your investments each month.</p>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
         <Field
           label="Expected return (%/yr)"
           name="expected_return_percent"
