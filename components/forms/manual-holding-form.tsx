@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { createManualHolding, updateManualHolding } from "@/lib/actions/investments";
 import { Field, SelectField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
+import { EquitySearchField } from "@/components/forms/equity-search-field";
+import type { NseEquity } from "@/lib/nse-search";
 import {
   ASSET_TYPES,
   isQuantityBasedAsset,
@@ -25,10 +27,20 @@ export function ManualHoldingForm({
   const [error, setError] = useState<string | undefined>();
   const [assetType, setAssetType] = useState<AssetType>(holding?.asset_type ?? "equity");
   const [amount, setAmount] = useState(holding?.average_buy_price != null ? String(holding.average_buy_price) : "");
+  const [instrumentName, setInstrumentName] = useState(holding?.instrument_name ?? "");
+  const [symbol, setSymbol] = useState(holding?.symbol ?? "");
+  const [isin, setIsin] = useState(holding?.isin ?? "");
 
   const quantityBased = isQuantityBasedAsset(assetType);
   const interestBearing = isInterestBearingAsset(assetType);
   const simpleAmount = isSimpleAmountAsset(assetType);
+  const nseSearchable = assetType === "equity" || assetType === "etf";
+
+  function handleEquitySelect(equity: NseEquity) {
+    setInstrumentName(equity.name);
+    setSymbol(equity.symbol);
+    setIsin(equity.isin);
+  }
 
   function handleSubmit(formData: FormData) {
     setError(undefined);
@@ -47,14 +59,19 @@ export function ManualHoldingForm({
     <form action={handleSubmit}>
       {holding && <input type="hidden" name="id" value={holding.id} />}
 
-      <Field
-        label="Investment name"
-        name="instrument_name"
-        placeholder={quantityBased ? "e.g. HDFC Bank" : simpleAmount ? "e.g. Cash at home" : "e.g. SBI FD — 3yr"}
-        defaultValue={holding?.instrument_name}
-        required
-        autoFocus
-      />
+      {nseSearchable ? (
+        <EquitySearchField value={instrumentName} onChange={setInstrumentName} onSelect={handleEquitySelect} />
+      ) : (
+        <Field
+          label="Investment name"
+          name="instrument_name"
+          placeholder={quantityBased ? "e.g. HDFC Gold ETF" : simpleAmount ? "e.g. Cash at home" : "e.g. SBI FD — 3yr"}
+          value={instrumentName}
+          onChange={(e) => setInstrumentName(e.target.value)}
+          required
+          autoFocus
+        />
+      )}
 
       <SelectField
         label="Type"
@@ -72,12 +89,26 @@ export function ManualHoldingForm({
       {quantityBased && (
         <>
           <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
-            <Field label="Symbol (optional)" name="symbol" placeholder="HDFCBANK" defaultValue={holding?.symbol ?? ""} />
-            <Field label="ISIN (optional)" name="isin" placeholder="INE040A01034" defaultValue={holding?.isin ?? ""} />
+            <Field
+              label="Symbol (optional)"
+              name="symbol"
+              placeholder="HDFCBANK"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value)}
+            />
+            <Field
+              label="ISIN (optional)"
+              name="isin"
+              placeholder="INE040A01034"
+              value={isin}
+              onChange={(e) => setIsin(e.target.value)}
+            />
           </div>
-          {(assetType === "equity" || assetType === "etf") && (
+          {nseSearchable && (
             <p className="mt-1.5 text-[12px] text-muted">
-              NSE trading symbol — set this to use &quot;Refresh prices&quot; for live prices later.
+              {instrumentName && symbol
+                ? "Filled in from the NSE listing — edit if needed."
+                : "Search by company name above, or fill these in yourself. Symbol is needed for “Refresh prices” later."}
             </p>
           )}
         </>
