@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createManualHolding, updateManualHolding } from "@/lib/actions/investments";
-import { refreshHoldingPrice } from "@/lib/actions/prices";
+import { refreshHoldingPrice, lookupEquityPrice } from "@/lib/actions/prices";
 import { Field, SelectField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
 import { EquitySearchField } from "@/components/forms/equity-search-field";
@@ -31,6 +31,8 @@ export function ManualHoldingForm({
   const [instrumentName, setInstrumentName] = useState(holding?.instrument_name ?? "");
   const [symbol, setSymbol] = useState(holding?.symbol ?? "");
   const [isin, setIsin] = useState(holding?.isin ?? "");
+  const [currentPrice, setCurrentPrice] = useState(holding?.current_price != null ? String(holding.current_price) : "");
+  const [priceFetching, setPriceFetching] = useState(false);
 
   const quantityBased = isQuantityBasedAsset(assetType);
   const interestBearing = isInterestBearingAsset(assetType);
@@ -41,6 +43,11 @@ export function ManualHoldingForm({
     setInstrumentName(equity.name);
     setSymbol(equity.symbol);
     setIsin(equity.isin);
+    setPriceFetching(true);
+    lookupEquityPrice(equity.symbol).then((price) => {
+      setPriceFetching(false);
+      if (price != null) setCurrentPrice(String(price));
+    });
   }
 
   function handleSubmit(formData: FormData) {
@@ -155,16 +162,19 @@ export function ManualHoldingForm({
           </div>
 
           <Field
-            label="Current price (₹, optional)"
+            label={priceFetching ? "Current price (₹) — fetching live price…" : "Current price (₹, optional)"}
             name="current_price"
             type="number"
             step="0.01"
             min="0"
             placeholder="1720"
-            defaultValue={holding?.current_price ?? ""}
+            value={currentPrice}
+            onChange={(e) => setCurrentPrice(e.target.value)}
           />
           <p className="mt-1.5 text-[12px] text-muted">
-            Labeled &quot;Manual&quot; on the dashboard — update it yourself whenever you check the price.
+            {nseSearchable
+              ? "Filled in live when you pick a company above — edit it yourself any time after."
+              : "Labeled “Manual” on the dashboard — update it yourself whenever you check the price."}
           </p>
         </>
       ) : simpleAmount ? (
@@ -235,7 +245,7 @@ export function ManualHoldingForm({
       )}
 
       <FormError message={error} />
-      <SubmitButton pending={pending}>{holding ? "Save changes" : "Add investment"}</SubmitButton>
+      <SubmitButton pending={pending || priceFetching}>{holding ? "Save changes" : "Add investment"}</SubmitButton>
     </form>
   );
 }

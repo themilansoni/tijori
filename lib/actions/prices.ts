@@ -20,6 +20,11 @@ async function fetchSymbolPrice(symbol: string): Promise<number | null> {
   }
 }
 
+/** Read-only price lookup — no Firestore write, no auth needed. Used to pre-fill "Current price" the moment a company is picked from search, before the holding even exists yet. */
+export async function lookupEquityPrice(symbol: string): Promise<number | null> {
+  return fetchSymbolPrice(symbol);
+}
+
 /** Fetches and saves the price for one holding — used right after adding a new equity/ETF so it's priced immediately, without waiting for a manual refresh. */
 export async function refreshHoldingPrice(holdingId: string, symbol: string): Promise<number | null> {
   const auth = requireUid();
