@@ -10,6 +10,33 @@ import type { InvestmentHolding } from "@/lib/types";
 const PRICE_PROXY_URL = "https://tijori-price-proxy.vercel.app/api/price";
 const MAX_HOLDINGS_PER_REFRESH = 30;
 
+async function fetchSymbolPrice(symbol: string): Promise<number | null> {
+  try {
+    const res = await fetch(`${PRICE_PROXY_URL}?symbol=${encodeURIComponent(symbol)}`);
+    const data = await res.json();
+    return res.ok && typeof data.price === "number" ? data.price : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Fetches and saves the price for one holding — used right after adding a new equity/ETF so it's priced immediately, without waiting for a manual refresh. */
+export async function refreshHoldingPrice(holdingId: string, symbol: string): Promise<number | null> {
+  const auth = requireUid();
+  if ("error" in auth) return null;
+
+  const price = await fetchSymbolPrice(symbol);
+  if (price == null) return null;
+
+  const now = new Date().toISOString();
+  await updateDoc(doc(db, "users", auth.uid, "investmentHoldings", holdingId), {
+    current_price: price,
+    last_price_update: now,
+    updated_at: now,
+  });
+  return price;
+}
+
 export type RefreshPricesResult = { error: string } | { ok: true; updated: string[]; skipped: string[] };
 
 export async function refreshEquityPrices(): Promise<RefreshPricesResult> {
@@ -33,22 +60,17 @@ export async function refreshEquityPrices(): Promise<RefreshPricesResult> {
 
   await Promise.all(
     eligible.map(async (h) => {
-      try {
-        const res = await fetch(`${PRICE_PROXY_URL}?symbol=${encodeURIComponent(h.symbol!)}`);
-        const data = await res.json();
-        if (!res.ok || typeof data.price !== "number") {
-          skipped.push(h.instrument_name);
-          return;
-        }
-        await updateDoc(doc(db, "users", uid, "investmentHoldings", h.id), {
-          current_price: data.price,
-          last_price_update: now,
-          updated_at: now,
-        });
-        updated.push(h.instrument_name);
-      } catch {
+      const price = await fetchSymbolPrice(h.symbol!);
+      if (price == null) {
         skipped.push(h.instrument_name);
+        return;
       }
+      await updateDoc(doc(db, "users", uid, "investmentHoldings", h.id), {
+        current_price: price,
+        last_price_update: now,
+        updated_at: now,
+      });
+      updated.push(h.instrument_name);
     })
   );
 

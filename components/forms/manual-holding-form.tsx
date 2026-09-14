@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createManualHolding, updateManualHolding } from "@/lib/actions/investments";
+import { refreshHoldingPrice } from "@/lib/actions/prices";
 import { Field, SelectField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
 import { EquitySearchField } from "@/components/forms/equity-search-field";
@@ -45,10 +46,21 @@ export function ManualHoldingForm({
   function handleSubmit(formData: FormData) {
     setError(undefined);
     startTransition(async () => {
-      const result = holding ? await updateManualHolding(formData) : await createManualHolding(formData);
-      if ("error" in result) {
-        setError(result.error);
-        return;
+      if (holding) {
+        const result = await updateManualHolding(formData);
+        if ("error" in result) {
+          setError(result.error);
+          return;
+        }
+      } else {
+        const result = await createManualHolding(formData);
+        if ("error" in result) {
+          setError(result.error);
+          return;
+        }
+        if (nseSearchable && symbol) {
+          await refreshHoldingPrice(result.holding.id, symbol);
+        }
       }
       onSuccess?.();
       close();
