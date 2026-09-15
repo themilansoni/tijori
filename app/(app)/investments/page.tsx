@@ -79,7 +79,7 @@ export default function InvestmentsPage() {
   const totals = calculateTotalPortfolioValue(visibleHoldings);
   const allocation = calculatePortfolioAllocation(visibleHoldings);
   const hasRefreshableHoldings = holdings.some(
-    (h) => h.is_active && (h.asset_type === "equity" || h.asset_type === "etf") && h.symbol
+    (h) => h.is_active && ["equity", "etf", "mutual_fund"].includes(h.asset_type) && h.symbol
   );
 
   return (

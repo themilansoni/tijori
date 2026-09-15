@@ -37,8 +37,8 @@ export function InvestmentTransactionForm({
         setError(result.error);
         return;
       }
-      if ((holding.asset_type === "equity" || holding.asset_type === "etf") && holding.symbol) {
-        await refreshHoldingPrice(holding.id, holding.symbol);
+      if (holding.symbol && ["equity", "etf", "mutual_fund"].includes(holding.asset_type)) {
+        await refreshHoldingPrice(holding.id, holding.asset_type, holding.symbol);
       }
       onSuccess?.();
       close();

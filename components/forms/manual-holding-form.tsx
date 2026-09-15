@@ -7,7 +7,9 @@ import { createHouseholdMember } from "@/lib/actions/household";
 import { Field, SelectField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
 import { EquitySearchField } from "@/components/forms/equity-search-field";
+import { MutualFundSearchField } from "@/components/forms/mutual-fund-search-field";
 import type { NseEquity } from "@/lib/nse-search";
+import type { MfScheme } from "@/lib/mf-search";
 import {
   ASSET_TYPES,
   isQuantityBasedAsset,
@@ -84,6 +86,8 @@ export function ManualHoldingForm({
   const interestBearing = isInterestBearingAsset(assetType);
   const simpleAmount = isSimpleAmountAsset(assetType);
   const nseSearchable = assetType === "equity" || assetType === "etf";
+  const mfSearchable = assetType === "mutual_fund";
+  const searchable = nseSearchable || mfSearchable;
 
   function handleEquitySelect(equity: NseEquity) {
     setInstrumentName(equity.name);
@@ -96,6 +100,14 @@ export function ManualHoldingForm({
     });
   }
 
+  function handleMfSelect(scheme: MfScheme) {
+    // AMFI's NAV file already carries today's price with the search result — no separate lookup needed.
+    setInstrumentName(scheme.name);
+    setSymbol(scheme.schemeCode);
+    setIsin(scheme.isin ?? "");
+    setCurrentPrice(String(scheme.nav));
+  }
+
   function handleSubmit(formData: FormData) {
     setError(undefined);
     startTransition(async () => {
@@ -105,8 +117,8 @@ export function ManualHoldingForm({
           setError(result.error);
           return;
         }
-        if (nseSearchable && symbol) {
-          await refreshHoldingPrice(holding.id, symbol);
+        if (searchable && symbol) {
+          await refreshHoldingPrice(holding.id, assetType, symbol);
         }
       } else {
         const result = await createManualHolding(formData);
@@ -114,8 +126,8 @@ export function ManualHoldingForm({
           setError(result.error);
           return;
         }
-        if (nseSearchable && symbol) {
-          await refreshHoldingPrice(result.holding.id, symbol);
+        if (searchable && symbol) {
+          await refreshHoldingPrice(result.holding.id, assetType, symbol);
         }
       }
       onSuccess?.();
@@ -129,6 +141,8 @@ export function ManualHoldingForm({
 
       {nseSearchable ? (
         <EquitySearchField value={instrumentName} onChange={setInstrumentName} onSelect={handleEquitySelect} />
+      ) : mfSearchable ? (
+        <MutualFundSearchField value={instrumentName} onChange={setInstrumentName} onSelect={handleMfSelect} />
       ) : (
         <Field
           label="Investment name"
@@ -211,9 +225,9 @@ export function ManualHoldingForm({
         <>
           <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
             <Field
-              label="Symbol (optional)"
+              label={mfSearchable ? "Scheme code (optional)" : "Symbol (optional)"}
               name="symbol"
-              placeholder="HDFCBANK"
+              placeholder={mfSearchable ? "122639" : "HDFCBANK"}
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}
             />
@@ -225,11 +239,13 @@ export function ManualHoldingForm({
               onChange={(e) => setIsin(e.target.value)}
             />
           </div>
-          {nseSearchable && (
+          {searchable && (
             <p className="mt-1.5 text-[12px] text-muted">
               {instrumentName && symbol
-                ? "Filled in from the NSE listing — edit if needed."
-                : "Search by company name above, or fill these in yourself. Symbol is needed for “Refresh prices” later."}
+                ? `Filled in from the ${mfSearchable ? "AMFI" : "NSE"} listing — edit if needed.`
+                : `Search by ${mfSearchable ? "fund" : "company"} name above, or fill these in yourself. ${
+                    mfSearchable ? "Scheme code" : "Symbol"
+                  } is needed for “Refresh prices” later.`}
             </p>
           )}
         </>
@@ -271,8 +287,8 @@ export function ManualHoldingForm({
             onChange={(e) => setCurrentPrice(e.target.value)}
           />
           <p className="mt-1.5 text-[12px] text-muted">
-            {nseSearchable
-              ? "Filled in live when you pick a company above — edit it yourself any time after."
+            {searchable
+              ? `Filled in live when you pick a ${mfSearchable ? "fund" : "company"} above — edit it yourself any time after.`
               : "Labeled “Manual” on the dashboard — update it yourself whenever you check the price."}
           </p>
         </>
