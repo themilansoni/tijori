@@ -7,6 +7,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { useAuth } from "@/lib/auth-context";
 import { TijoriLogo } from "@/components/ui/tijori-logo";
+import { MadeBy } from "@/components/ui/made-by";
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { MobileNav } from "@/components/nav/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -58,6 +59,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="mb-1.5 truncate px-3.5 text-[12px] text-nav-muted">{user.email}</div>
           )}
           <LogoutButton />
+          <MadeBy className="mt-3 px-3.5" />
         </div>
       </aside>
 

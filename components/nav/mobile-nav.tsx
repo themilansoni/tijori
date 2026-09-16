@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { TijoriLogo } from "@/components/ui/tijori-logo";
+import { MadeBy } from "@/components/ui/made-by";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -68,6 +69,7 @@ export function MobileNav({
               </div>
               {userEmail && <div className="mb-2 truncate text-[12px] text-nav-muted">{userEmail}</div>}
               {logoutForm}
+              <MadeBy className="mt-3" />
             </div>
           </div>
         </div>

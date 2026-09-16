@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { SafeSketch } from "@/components/ui/safe-sketch";
+import { MadeBy } from "@/components/ui/made-by";
 import { useAuth } from "@/lib/auth-context";
 
 const ALWAYS_ACCESSIBLE_ROUTES = ["/reset-password"];
@@ -79,6 +80,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <TijoriLogo height={26} className="mb-10 lg:mb-14" />
 
           {children}
+
+          <MadeBy className="mt-10" />
         </div>
       </div>
     </div>
