@@ -200,6 +200,25 @@ export type NetWorthSnapshot = {
   created_at: string;
 };
 
+/** A monthly-recurring expense or income (rent, subscriptions, salary) that auto-logs a real
+ *  transaction instead of being entered by hand each time. */
+export type RecurringRule = {
+  id: string;
+  user_id: string;
+  type: "expense" | "income";
+  category_id: string;
+  amount: number;
+  description: string | null;
+  account_id: string | null;
+  owner_id: string | null;
+  day_of_month: number; // 1-28, to sidestep short-month edge cases
+  next_run_date: string; // YYYY-MM-DD — the next occurrence still to be logged
+  last_run_date: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type HouseholdMember = {
   id: string;
   user_id: string;

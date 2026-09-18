@@ -12,6 +12,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-selector";
 import { SpendBarChart } from "@/components/charts/spend-bar-chart";
 import { ExpenseForm } from "@/components/forms/expense-form";
+import { processRecurringRules } from "@/lib/actions/recurring";
 import { FiltersBar, type SortKey } from "./filters-bar";
 import { ExpenseList } from "./expense-list";
 import {
@@ -55,6 +56,7 @@ function ExpensesContent() {
     if (!user) return;
     setLoading(true);
     const uid = user.uid;
+    await processRecurringRules().catch(() => {});
     const [catSnap, txSnap, accSnap, loanSnap, memberSnap] = await Promise.all([
       getDocs(query(collection(db, "users", uid, "categories"), where("type", "==", "expense"))),
       getDocs(query(collection(db, "users", uid, "transactions"), where("type", "==", "expense"))),

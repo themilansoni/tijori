@@ -13,6 +13,7 @@ import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
 import { NetWorthChart } from "@/components/charts/net-worth-chart";
 import { QuickAddFab } from "@/components/dashboard/quick-add-fab";
 import { recordNetWorthSnapshot } from "@/lib/actions/net-worth";
+import { processRecurringRules } from "@/lib/actions/recurring";
 import {
   getPeriodRange,
   sumAmount,
@@ -70,6 +71,7 @@ function DashboardContent() {
     if (!user) return;
     setLoading(true);
     const uid = user.uid;
+    await processRecurringRules().catch(() => {});
     const [txSnap, catSnap, accSnap, budgetSnap, holdingSnap, loanSnap, snapshotSnap] = await Promise.all([
       getDocs(collection(db, "users", uid, "transactions")),
       getDocs(collection(db, "users", uid, "categories")),
