@@ -22,6 +22,7 @@ import type {
   BudgetPeriod,
   Category,
   InvestmentHolding,
+  Loan,
   PeriodKey,
   Transaction,
 } from "./types";
@@ -436,4 +437,31 @@ export function projectFire(params: {
   }
 
   return { points, fireAge, fireYear };
+}
+
+/** EMIs left to pay, or null when the loan has no fixed tenure to count against. */
+export function calculateLoanPendingEmis(loan: Loan): number | null {
+  if (loan.tenure_months == null) return null;
+  return Math.max(0, loan.tenure_months - loan.emis_paid);
+}
+
+/** How much of the principal has been paid off, or null when no principal was recorded. */
+export function calculateLoanPaidAmount(loan: Loan): number | null {
+  if (loan.principal_amount == null) return null;
+  return Math.max(0, loan.principal_amount - loan.outstanding_amount);
+}
+
+export type LoanTotals = {
+  totalOutstanding: number;
+  totalMonthlyEmi: number;
+  activeCount: number;
+};
+
+export function calculateLoanTotals(loans: Loan[]): LoanTotals {
+  const active = loans.filter((l) => l.is_active);
+  return {
+    totalOutstanding: active.reduce((sum, l) => sum + Number(l.outstanding_amount), 0),
+    totalMonthlyEmi: active.reduce((sum, l) => sum + Number(l.emi_amount), 0),
+    activeCount: active.length,
+  };
 }

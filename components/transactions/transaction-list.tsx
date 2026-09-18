@@ -6,23 +6,26 @@ import { TransactionForm } from "@/components/forms/transaction-form";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { deleteTransaction } from "@/lib/actions/transactions";
 import { fmtCurrency } from "@/lib/calculations";
-import type { Account, Category, Transaction } from "@/lib/types";
+import type { Account, Category, Loan, Transaction } from "@/lib/types";
 
 export function TransactionList({
   type,
   transactions,
   categories,
   accounts,
+  loans = [],
   onChanged,
 }: {
   type: "expense" | "income";
   transactions: Transaction[];
   categories: Category[];
   accounts: Account[];
+  loans?: Loan[];
   onChanged?: () => void;
 }) {
   const categoryById = new Map(categories.map((c) => [c.id, c]));
   const accountById = new Map(accounts.map((a) => [a.id, a]));
+  const loanById = new Map(loans.map((l) => [l.id, l]));
   const noun = type === "income" ? "income" : "expenses";
   const amountColor = type === "income" ? "text-success" : "text-foreground";
   const sign = type === "income" ? "+" : "−";
@@ -62,14 +65,21 @@ export function TransactionList({
                   {format(parseISO(t.transaction_date), "dd MMM yyyy")}
                 </td>
                 <td className="px-4 py-3">{categoryById.get(t.category_id)?.name ?? "—"}</td>
-                <td className="px-4 py-3 text-muted">{t.description || "—"}</td>
+                <td className="px-4 py-3 text-muted">
+                  {t.description || "—"}
+                  {t.loan_id && loanById.has(t.loan_id) && (
+                    <span className="ml-1.5 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
+                      {loanById.get(t.loan_id)!.name}
+                    </span>
+                  )}
+                </td>
                 <td className={`px-4 py-3 text-right font-semibold ${amountColor}`}>
                   {sign}
                   {fmtCurrency(t.amount)}
                 </td>
                 <td className="px-4 py-3 text-muted">{accountLabel(t)}</td>
                 <td className="px-4 py-3">
-                  <RowActions type={type} transaction={t} categories={categories} accounts={accounts} onChanged={onChanged} />
+                  <RowActions type={type} transaction={t} categories={categories} accounts={accounts} loans={loans} onChanged={onChanged} />
                 </td>
               </tr>
             ))}
@@ -89,6 +99,11 @@ export function TransactionList({
                   {accountLabel(t) !== "—" ? ` · ${accountLabel(t)}` : ""}
                 </div>
                 {t.description && <div className="mt-1 text-sm text-muted">{t.description}</div>}
+                {t.loan_id && loanById.has(t.loan_id) && (
+                  <span className="mt-1 inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
+                    {loanById.get(t.loan_id)!.name}
+                  </span>
+                )}
               </div>
               <div className={`text-right font-bold ${amountColor}`}>
                 {sign}
@@ -96,7 +111,7 @@ export function TransactionList({
               </div>
             </div>
             <div className="mt-3 flex justify-end">
-              <RowActions type={type} transaction={t} categories={categories} accounts={accounts} onChanged={onChanged} />
+              <RowActions type={type} transaction={t} categories={categories} accounts={accounts} loans={loans} onChanged={onChanged} />
             </div>
           </div>
         ))}
@@ -110,12 +125,14 @@ function RowActions({
   transaction,
   categories,
   accounts,
+  loans = [],
   onChanged,
 }: {
   type: "expense" | "income";
   transaction: Transaction;
   categories: Category[];
   accounts: Account[];
+  loans?: Loan[];
   onChanged?: () => void;
 }) {
   return (
@@ -128,6 +145,7 @@ function RowActions({
           type={type}
           categories={categories}
           accounts={accounts}
+          loans={loans}
           transaction={transaction}
           onSuccess={onChanged}
         />

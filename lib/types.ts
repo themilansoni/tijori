@@ -15,11 +15,29 @@ export type Transaction = {
   type: "expense" | "income";
   category_id: string;
   account_id: string | null;
+  loan_id: string | null;
   amount: number;
   transaction_date: string; // YYYY-MM-DD
   description: string | null;
   payment_method: string | null;
   note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Loan = {
+  id: string;
+  user_id: string;
+  name: string;
+  interest_rate: number | null; // annual %, optional
+  principal_amount: number | null; // original loan amount, optional — enables a "paid off so far" figure
+  outstanding_amount: number; // current total outstanding — decremented when an expense is linked to this loan
+  emi_amount: number; // per month EMI
+  tenure_months: number | null; // total number of EMIs, optional
+  emis_paid: number; // EMIs paid so far (auto-incremented by linked expenses, editable by hand too)
+  next_due_date: string | null;
+  owner_id: string | null;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 };

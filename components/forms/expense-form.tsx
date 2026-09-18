@@ -1,9 +1,10 @@
 import { TransactionForm } from "@/components/forms/transaction-form";
-import type { Account, Category, Transaction } from "@/lib/types";
+import type { Account, Category, Loan, Transaction } from "@/lib/types";
 
 export function ExpenseForm({
   categories,
   accounts = [],
+  loans = [],
   transaction,
   defaultDate,
   keepOpenOnAdd,
@@ -11,6 +12,7 @@ export function ExpenseForm({
 }: {
   categories: Category[];
   accounts?: Account[];
+  loans?: Loan[];
   transaction?: Transaction;
   defaultDate?: string;
   keepOpenOnAdd?: boolean;
@@ -21,6 +23,7 @@ export function ExpenseForm({
       type="expense"
       categories={categories}
       accounts={accounts}
+      loans={loans}
       transaction={transaction}
       defaultDate={defaultDate}
       keepOpenOnAdd={keepOpenOnAdd}

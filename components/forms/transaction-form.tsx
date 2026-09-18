@@ -5,7 +5,7 @@ import { createTransaction, updateTransaction } from "@/lib/actions/transactions
 import { createCategory } from "@/lib/actions/categories";
 import { Field, SelectField, TextareaField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
-import type { Account, Category, Transaction } from "@/lib/types";
+import type { Account, Category, Loan, Transaction } from "@/lib/types";
 
 const ADD_NEW_SENTINEL = "__add_new__";
 
@@ -13,6 +13,7 @@ export function TransactionForm({
   type,
   categories: initialCategories,
   accounts,
+  loans = [],
   transaction,
   defaultDate,
   keepOpenOnAdd,
@@ -21,6 +22,7 @@ export function TransactionForm({
   type: "expense" | "income";
   categories: Category[];
   accounts: Account[];
+  loans?: Loan[];
   transaction?: Transaction;
   defaultDate?: string;
   keepOpenOnAdd?: boolean;
@@ -33,6 +35,7 @@ export function TransactionForm({
 
   const [categories, setCategories] = useState(initialCategories);
   const [categoryId, setCategoryId] = useState(transaction?.category_id ?? "");
+  const [loanId, setLoanId] = useState(transaction?.loan_id ?? "");
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -91,6 +94,7 @@ export function TransactionForm({
         close();
       } else {
         setCategoryId("");
+        setLoanId("");
         setResetKey((k) => k + 1);
       }
     });
@@ -98,6 +102,8 @@ export function TransactionForm({
 
   const today = defaultDate ?? new Date().toISOString().slice(0, 10);
   const accountLabel = type === "income" ? "Received into" : "Paid from (optional)";
+  // Only offer active loans, but keep whichever loan this transaction is already linked to selectable too.
+  const selectableLoans = loans.filter((l) => l.is_active || l.id === transaction?.loan_id);
 
   return (
     <form key={resetKey} action={handleSubmit}>
@@ -171,6 +177,22 @@ export function TransactionForm({
             </button>
           </div>
         </div>
+      )}
+
+      {type === "expense" && selectableLoans.length > 0 && (
+        <>
+          <SelectField label="Link to loan (optional)" name="loan_id" value={loanId} onChange={(e) => setLoanId(e.target.value)}>
+            <option value="">Not a loan payment</option>
+            {selectableLoans.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </SelectField>
+          {loanId && (
+            <p className="mt-1.5 text-[12px] text-muted">This amount will come off the loan's outstanding balance.</p>
+          )}
+        </>
       )}
 
       <Field

@@ -23,7 +23,7 @@ import {
   spendingByMonth,
   fmtCurrency,
 } from "@/lib/calculations";
-import type { Account, Category, PeriodKey, Transaction } from "@/lib/types";
+import type { Account, Category, Loan, PeriodKey, Transaction } from "@/lib/types";
 
 export default function ExpensesPage() {
   return (
@@ -47,19 +47,22 @@ function ExpensesContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [allExpenseTransactions, setAllExpenseTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const uid = user.uid;
-    const [catSnap, txSnap, accSnap] = await Promise.all([
+    const [catSnap, txSnap, accSnap, loanSnap] = await Promise.all([
       getDocs(query(collection(db, "users", uid, "categories"), where("type", "==", "expense"))),
       getDocs(query(collection(db, "users", uid, "transactions"), where("type", "==", "expense"))),
       getDocs(query(collection(db, "users", uid, "accounts"), where("is_active", "==", true))),
+      getDocs(collection(db, "users", uid, "loans")),
     ]);
     setCategories(mapDocs<Category>(catSnap).sort((a, b) => a.name.localeCompare(b.name)));
     setAllExpenseTransactions(mapDocs<Transaction>(txSnap));
     setAccounts(mapDocs<Account>(accSnap).sort((a, b) => a.name.localeCompare(b.name)));
+    setLoans(mapDocs<Loan>(loanSnap).sort((a, b) => a.name.localeCompare(b.name)));
     setLoading(false);
   }, [user]);
 
@@ -128,7 +131,7 @@ function ExpensesContent() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Expenses</h1>
         <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
-          <ExpenseForm categories={activeCategories} accounts={accounts} keepOpenOnAdd onSuccess={load} />
+          <ExpenseForm categories={activeCategories} accounts={accounts} loans={loans} keepOpenOnAdd onSuccess={load} />
         </Modal>
       </div>
 
@@ -208,12 +211,12 @@ function ExpensesContent() {
             </p>
             <div className="mt-4">
               <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
-                <ExpenseForm categories={activeCategories} accounts={accounts} keepOpenOnAdd onSuccess={load} />
+                <ExpenseForm categories={activeCategories} accounts={accounts} loans={loans} keepOpenOnAdd onSuccess={load} />
               </Modal>
             </div>
           </div>
         ) : (
-          <ExpenseList transactions={visible} categories={categories} accounts={accounts} onChanged={load} />
+          <ExpenseList transactions={visible} categories={categories} accounts={accounts} loans={loans} onChanged={load} />
         )}
       </div>
     </div>
