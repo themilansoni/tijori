@@ -6,6 +6,7 @@ import {
   updateDoc,
   deleteDoc,
   runTransaction,
+  writeBatch,
   type Transaction as FirestoreTransaction,
   type DocumentReference,
   type DocumentSnapshot,
@@ -173,4 +174,56 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
   });
 
   return { ok: true };
+}
+
+export type BulkImportRow = {
+  type: "expense" | "income";
+  category_id: string;
+  amount: number;
+  transaction_date: string;
+  description: string | null;
+  account_id: string | null;
+};
+
+/** Bulk-creates transactions from a CSV import, chunked into Firestore batched writes (max 500
+ *  ops each — kept at 450 for headroom) so a large statement doesn't need hundreds of round trips. */
+export async function bulkCreateTransactions(
+  rows: BulkImportRow[]
+): Promise<{ ok: true; count: number } | { error: string }> {
+  const auth = requireUid();
+  if ("error" in auth) return auth;
+  const { uid } = auth;
+
+  if (rows.length === 0) return { error: "Nothing to import." };
+  if (rows.length > 2000) return { error: "Too many rows in one import — split it into smaller files (max 2000)." };
+
+  const now = new Date().toISOString();
+  const CHUNK = 450;
+  let count = 0;
+
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    for (const r of rows.slice(i, i + CHUNK)) {
+      const ref = doc(collection(db, "users", uid, "transactions"));
+      batch.set(ref, {
+        user_id: uid,
+        type: r.type,
+        category_id: r.category_id,
+        account_id: r.account_id,
+        loan_id: null,
+        owner_id: null,
+        amount: r.amount,
+        transaction_date: r.transaction_date,
+        description: r.description,
+        payment_method: null,
+        note: null,
+        created_at: now,
+        updated_at: now,
+      });
+      count++;
+    }
+    await batch.commit();
+  }
+
+  return { ok: true, count };
 }

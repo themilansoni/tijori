@@ -12,6 +12,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-selector";
 import { SpendBarChart } from "@/components/charts/spend-bar-chart";
 import { ExpenseForm } from "@/components/forms/expense-form";
+import { CsvImportForm } from "@/components/forms/csv-import-form";
 import { processRecurringRules } from "@/lib/actions/recurring";
 import { FiltersBar, type SortKey } from "./filters-bar";
 import { ExpenseList } from "./expense-list";
@@ -51,20 +52,23 @@ function ExpensesContent() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const uid = user.uid;
     await processRecurringRules().catch(() => {});
-    const [catSnap, txSnap, accSnap, loanSnap, memberSnap] = await Promise.all([
+    const [catSnap, incomeCatSnap, txSnap, accSnap, loanSnap, memberSnap] = await Promise.all([
       getDocs(query(collection(db, "users", uid, "categories"), where("type", "==", "expense"))),
+      getDocs(query(collection(db, "users", uid, "categories"), where("type", "==", "income"))),
       getDocs(query(collection(db, "users", uid, "transactions"), where("type", "==", "expense"))),
       getDocs(query(collection(db, "users", uid, "accounts"), where("is_active", "==", true))),
       getDocs(collection(db, "users", uid, "loans")),
       getDocs(collection(db, "users", uid, "householdMembers")),
     ]);
     setCategories(mapDocs<Category>(catSnap).sort((a, b) => a.name.localeCompare(b.name)));
+    setIncomeCategories(mapDocs<Category>(incomeCatSnap).sort((a, b) => a.name.localeCompare(b.name)));
     setAllExpenseTransactions(mapDocs<Transaction>(txSnap));
     setAccounts(mapDocs<Account>(accSnap).sort((a, b) => a.name.localeCompare(b.name)));
     setLoans(mapDocs<Loan>(loanSnap).sort((a, b) => a.name.localeCompare(b.name)));
@@ -137,9 +141,19 @@ function ExpensesContent() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Expenses</h1>
-        <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
-          <ExpenseForm categories={activeCategories} accounts={accounts} loans={loans} members={members} keepOpenOnAdd onSuccess={load} />
-        </Modal>
+        <div className="flex items-center gap-2.5">
+          <Modal trigger={<Button variant="ghost">Import CSV</Button>} title="Import from CSV">
+            <CsvImportForm
+              expenseCategories={activeCategories}
+              incomeCategories={incomeCategories.filter((c) => c.is_active)}
+              accounts={accounts}
+              onSuccess={load}
+            />
+          </Modal>
+          <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
+            <ExpenseForm categories={activeCategories} accounts={accounts} loans={loans} members={members} keepOpenOnAdd onSuccess={load} />
+          </Modal>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
