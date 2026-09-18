@@ -10,7 +10,9 @@ import { mapDocs } from "@/lib/firebase/collection-helpers";
 import { useAuth } from "@/lib/auth-context";
 import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-selector";
 import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
+import { NetWorthChart } from "@/components/charts/net-worth-chart";
 import { QuickAddFab } from "@/components/dashboard/quick-add-fab";
+import { recordNetWorthSnapshot } from "@/lib/actions/net-worth";
 import {
   getPeriodRange,
   sumAmount,
@@ -25,6 +27,7 @@ import {
   calculateTotalPortfolioValue,
   calculateMarketValue,
   calculateInvestedAmount,
+  calculateLoanTotals,
   fmtCurrency,
 } from "@/lib/calculations";
 import {
@@ -33,6 +36,8 @@ import {
   type Budget,
   type Category,
   type InvestmentHolding,
+  type Loan,
+  type NetWorthSnapshot,
   type PeriodKey,
   type Transaction,
 } from "@/lib/types";
@@ -58,34 +63,43 @@ function DashboardContent() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [activeHoldings, setActiveHoldings] = useState<InvestmentHolding[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
+  const [netWorthHistory, setNetWorthHistory] = useState<NetWorthSnapshot[]>([]);
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const uid = user.uid;
-    const [txSnap, catSnap, accSnap, budgetSnap, holdingSnap] = await Promise.all([
+    const [txSnap, catSnap, accSnap, budgetSnap, holdingSnap, loanSnap, snapshotSnap] = await Promise.all([
       getDocs(collection(db, "users", uid, "transactions")),
       getDocs(collection(db, "users", uid, "categories")),
       getDocs(collection(db, "users", uid, "accounts")),
       getDocs(collection(db, "users", uid, "budgets")),
       getDocs(collection(db, "users", uid, "investmentHoldings")),
+      getDocs(collection(db, "users", uid, "loans")),
+      getDocs(collection(db, "users", uid, "netWorthSnapshots")),
     ]);
 
     const cats = mapDocs<Category>(catSnap);
     const catById = new Map(cats.map((c) => [c.id, c]));
+    const txs = mapDocs<Transaction>(txSnap);
+    const accs = mapDocs<Account>(accSnap);
+    const holdings = mapDocs<InvestmentHolding>(holdingSnap).filter((h) => h.is_active);
+    const loansList = mapDocs<Loan>(loanSnap);
 
-    setAllTransactions(
-      mapDocs<Transaction>(txSnap).sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
-    );
+    setAllTransactions(txs.sort((a, b) => (a.created_at < b.created_at ? 1 : -1)));
     setCategories(cats);
-    setAccounts(mapDocs<Account>(accSnap).sort((a, b) => a.name.localeCompare(b.name)));
+    setAccounts(accs.sort((a, b) => a.name.localeCompare(b.name)));
     setBudgets(mapDocs<Budget>(budgetSnap).filter((b) => catById.get(b.category_id)?.type === "expense"));
-    setActiveHoldings(
-      mapDocs<InvestmentHolding>(holdingSnap)
-        .filter((h) => h.is_active)
-        .sort((a, b) => a.instrument_name.localeCompare(b.instrument_name))
-    );
+    setActiveHoldings(holdings.sort((a, b) => a.instrument_name.localeCompare(b.instrument_name)));
+    setLoans(loansList);
+    setNetWorthHistory(mapDocs<NetWorthSnapshot>(snapshotSnap).sort((a, b) => a.month.localeCompare(b.month)));
     setLoading(false);
+
+    const cash = accs.filter((a) => a.is_active && isCashAccount(a)).reduce((sum, a) => sum + accountBalance(a, txs), 0);
+    const investments = calculateTotalPortfolioValue(holdings).currentValue;
+    const loanTotal = calculateLoanTotals(loansList).totalOutstanding;
+    recordNetWorthSnapshot({ cash, investments, loans: loanTotal }).catch(() => {});
   }, [user]);
 
   useEffect(() => {
@@ -129,6 +143,13 @@ function DashboardContent() {
   const budgetRemaining = totalBudget - totalBudgetSpent;
 
   const portfolioTotals = calculateTotalPortfolioValue(activeHoldings);
+  const loanOutstanding = calculateLoanTotals(loans).totalOutstanding;
+  const netWorth = totalBalance + portfolioTotals.currentValue - loanOutstanding;
+
+  const netWorthChartData = netWorthHistory.map((s) => ({
+    label: format(parseISO(`${s.month}-01`), "MMM yyyy"),
+    netWorth: s.net_worth,
+  }));
 
   const expenseCatBreakdown = categorySpending(periodExpense, categories);
   const incomeCatBreakdown = categorySpending(periodIncome, categories);
@@ -174,9 +195,22 @@ function DashboardContent() {
 
       {/* ---- Hero balance ---- */}
       <div className="mt-6 rounded-[var(--radius-lg)] border border-border bg-surface px-6 py-6 shadow-[var(--shadow-sm)] sm:px-8 sm:py-7">
-        <div className="text-[12px] font-medium uppercase tracking-[0.5px] text-muted">Current Balance</div>
-        <div className={`mt-1.5 text-[36px] font-semibold tracking-tight sm:text-[42px] ${totalBalance < 0 ? "text-danger" : ""}`}>
-          {fmtCurrency(totalBalance)}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <div className="text-[12px] font-medium uppercase tracking-[0.5px] text-muted">Current Balance</div>
+            <div className={`mt-1.5 text-[36px] font-semibold tracking-tight sm:text-[42px] ${totalBalance < 0 ? "text-danger" : ""}`}>
+              {fmtCurrency(totalBalance)}
+            </div>
+          </div>
+          <div>
+            <div className="text-[12px] font-medium uppercase tracking-[0.5px] text-muted">Net Worth</div>
+            <div className={`mt-1.5 text-[36px] font-semibold tracking-tight sm:text-[42px] ${netWorth < 0 ? "text-danger" : "text-accent"}`}>
+              {fmtCurrency(netWorth)}
+            </div>
+            <div className="mt-1 text-[11.5px] text-muted">
+              Cash + investments{loanOutstanding > 0 ? " − loans" : ""}
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 grid grid-cols-3 gap-4 border-t border-border pt-5">
@@ -196,6 +230,14 @@ function DashboardContent() {
           </div>
         </div>
       </div>
+
+      {/* ---- Net worth trend ---- */}
+      {netWorthChartData.length >= 2 && (
+        <section className="mt-6 rounded-xl border border-border bg-surface p-4">
+          <h2 className="mb-2 text-sm font-semibold text-muted">Net Worth Trend</h2>
+          <NetWorthChart data={netWorthChartData} />
+        </section>
+      )}
 
       {/* ---- Accounts ---- */}
       <section className="mt-6 rounded-xl border border-border bg-surface p-4">

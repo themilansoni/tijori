@@ -185,6 +185,21 @@ export type InvestmentHolding = {
   updated_at: string;
 };
 
+/** One per calendar month, keyed by `month` (doc id) — overwritten with the latest figures every
+ *  time the dashboard loads during that month, so the current month always reflects today's data
+ *  while past months stay frozen once the month turns over. */
+export type NetWorthSnapshot = {
+  id: string;
+  user_id: string;
+  month: string; // YYYY-MM
+  date: string; // YYYY-MM-DD, when this snapshot was last (re)written
+  net_worth: number;
+  cash: number;
+  investments: number;
+  loans: number;
+  created_at: string;
+};
+
 export type HouseholdMember = {
   id: string;
   user_id: string;
