@@ -4,6 +4,11 @@ Tracks what changed in each Android APK build. `versionCode`/`versionName` live 
 [`android/app/build.gradle`](android/app/build.gradle) — bump both whenever a new APK is built:
 `versionCode` by 1, `versionName` by semver (patch for fixes, minor for features).
 
+## 1.2.1 (versionCode 5) — 2026-09-18
+
+- "Add investment" now asks for the type first — the search field (equity, mutual
+  fund) and every other field only appear after a type is picked
+
 ## 1.2.0 (versionCode 4) — 2026-09-18
 
 - Investments table now groups holdings by category, collapsed by default — click a
