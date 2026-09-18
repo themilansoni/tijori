@@ -4,6 +4,12 @@ Tracks what changed in each Android APK build. `versionCode`/`versionName` live 
 [`android/app/build.gradle`](android/app/build.gradle) — bump both whenever a new APK is built:
 `versionCode` by 1, `versionName` by semver (patch for fixes, minor for features).
 
+## 1.2.0 (versionCode 4) — 2026-09-18
+
+- Investments table now groups holdings by category, collapsed by default — click a
+  group to expand it. Equity, ETF, and mutual fund holdings are clubbed into one
+  "Equity & Funds" group; every other asset type gets its own group.
+
 ## 1.1.1 (versionCode 3) — 2026-09-16
 
 - Added "Made by @themilansoni" attribution to the auth screens and app nav footer
