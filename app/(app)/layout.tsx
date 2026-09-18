@@ -8,6 +8,7 @@ import { auth } from "@/lib/firebase/client";
 import { useAuth } from "@/lib/auth-context";
 import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { MadeBy } from "@/components/ui/made-by";
+import { AppLockGate } from "@/components/app-lock/app-lock-gate";
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { MobileNav } from "@/components/nav/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -41,32 +42,34 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (loading || !user) return null;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground lg:flex-row">
-      <aside className="hidden w-64 shrink-0 flex-col bg-nav-bg px-4 py-6 text-nav-foreground lg:sticky lg:top-0 lg:flex lg:h-screen lg:border-r lg:border-nav-border">
-        <div className="px-2">
-          <TijoriLogo height={22} />
-        </div>
-
-        <div className="mt-8 flex-1">
-          <SidebarNav />
-        </div>
-
-        <div className="border-t border-nav-border pt-3">
-          <div className="mb-2 px-1">
-            <ThemeToggle />
+    <AppLockGate>
+      <div className="flex min-h-screen flex-col bg-background text-foreground lg:flex-row">
+        <aside className="hidden w-64 shrink-0 flex-col bg-nav-bg px-4 py-6 text-nav-foreground lg:sticky lg:top-0 lg:flex lg:h-screen lg:border-r lg:border-nav-border">
+          <div className="px-2">
+            <TijoriLogo height={22} />
           </div>
-          {user.email && (
-            <div className="mb-1.5 truncate px-3.5 text-[12px] text-nav-muted">{user.email}</div>
-          )}
-          <LogoutButton />
-          <MadeBy className="mt-3 px-3.5" />
-        </div>
-      </aside>
 
-      <div className="min-w-0 flex-1">
-        <MobileNav userEmail={user.email ?? undefined} logoutForm={<LogoutButton />} />
-        <main className="mx-auto max-w-4xl px-5 py-7 lg:px-10 lg:py-10">{children}</main>
+          <div className="mt-8 flex-1">
+            <SidebarNav />
+          </div>
+
+          <div className="border-t border-nav-border pt-3">
+            <div className="mb-2 px-1">
+              <ThemeToggle />
+            </div>
+            {user.email && (
+              <div className="mb-1.5 truncate px-3.5 text-[12px] text-nav-muted">{user.email}</div>
+            )}
+            <LogoutButton />
+            <MadeBy className="mt-3 px-3.5" />
+          </div>
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          <MobileNav userEmail={user.email ?? undefined} logoutForm={<LogoutButton />} />
+          <main className="mx-auto max-w-4xl px-5 py-7 lg:px-10 lg:py-10">{children}</main>
+        </div>
       </div>
-    </div>
+    </AppLockGate>
   );
 }

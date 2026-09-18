@@ -12,6 +12,7 @@ import { CategoryForm } from "@/components/forms/category-form";
 import { HouseholdMemberForm } from "@/components/forms/household-member-form";
 import { RecurringRuleForm } from "@/components/forms/recurring-rule-form";
 import { ExportSection } from "@/components/settings/export-section";
+import { AppLockSection } from "@/components/settings/app-lock-section";
 import { CategoryRow } from "./category-row";
 import { deleteHouseholdMember } from "@/lib/actions/household";
 import { setRecurringRuleActive, deleteRecurringRule } from "@/lib/actions/recurring";
@@ -216,6 +217,7 @@ export default function SettingsPage() {
         )}
       </section>
 
+      <AppLockSection />
       <ExportSection />
     </div>
   );
