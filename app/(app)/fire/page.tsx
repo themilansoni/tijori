@@ -14,12 +14,13 @@ import { FireChart } from "@/components/charts/fire-chart";
 import {
   calculateTotalPortfolioValue,
   calculateFireNumber,
+  calculateLoanTotals,
   projectFire,
   accountBalance,
   isCashAccount,
   fmtCurrency,
 } from "@/lib/calculations";
-import type { Account, FireProfile, InvestmentHolding, Transaction } from "@/lib/types";
+import type { Account, FireProfile, InvestmentHolding, Loan, Transaction } from "@/lib/types";
 
 type CorpusMode = "investments" | "netWorth";
 
@@ -30,22 +31,25 @@ export default function FirePage() {
   const [holdings, setHoldings] = useState<InvestmentHolding[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
   const [corpusMode, setCorpusMode] = useState<CorpusMode>("investments");
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const uid = user.uid;
-    const [fireProfile, holdingSnap, accSnap, txSnap] = await Promise.all([
+    const [fireProfile, holdingSnap, accSnap, txSnap, loanSnap] = await Promise.all([
       getFireProfile(),
       getDocs(collection(db, "users", uid, "investmentHoldings")),
       getDocs(collection(db, "users", uid, "accounts")),
       getDocs(collection(db, "users", uid, "transactions")),
+      getDocs(collection(db, "users", uid, "loans")),
     ]);
     setProfile(fireProfile);
     setHoldings(mapDocs<InvestmentHolding>(holdingSnap));
     setAccounts(mapDocs<Account>(accSnap));
     setTransactions(mapDocs<Transaction>(txSnap));
+    setLoans(mapDocs<Loan>(loanSnap));
     setLoading(false);
   }, [user]);
 
@@ -61,7 +65,9 @@ export default function FirePage() {
     .filter((a) => a.is_active && isCashAccount(a))
     .reduce((sum, a) => sum + accountBalance(a, transactions), 0);
   const netWorthCorpus = investmentsCorpus + cashBalance;
-  const currentCorpus = corpusMode === "netWorth" ? netWorthCorpus : investmentsCorpus;
+  const grossCorpus = corpusMode === "netWorth" ? netWorthCorpus : investmentsCorpus;
+  const loanOutstanding = calculateLoanTotals(loans).totalOutstanding;
+  const currentCorpus = grossCorpus - loanOutstanding;
 
   return (
     <div>
@@ -114,6 +120,7 @@ export default function FirePage() {
             {corpusMode === "netWorth"
               ? `Using investments + your cash/bank balance: ${fmtCurrency(netWorthCorpus)}.`
               : `Using investments only (today's default): ${fmtCurrency(investmentsCorpus)}.`}
+            {loanOutstanding > 0 && ` Minus ${fmtCurrency(loanOutstanding)} in outstanding loans = ${fmtCurrency(currentCorpus)} net.`}
           </p>
 
           <FireResults profile={profile} currentCorpus={currentCorpus} />
@@ -125,7 +132,8 @@ export default function FirePage() {
 
 function FireResults({ profile, currentCorpus }: { profile: FireProfile; currentCorpus: number }) {
   const fireNumberToday = calculateFireNumber(profile.monthly_expenses * 12, profile.safe_withdrawal_percent);
-  const progressPercent = fireNumberToday > 0 ? Math.min(100, (currentCorpus / fireNumberToday) * 100) : 0;
+  const progressPercent =
+    fireNumberToday > 0 ? Math.max(0, Math.min(100, (currentCorpus / fireNumberToday) * 100)) : 0;
 
   const { points, fireAge } = projectFire({
     currentAge: profile.current_age,
@@ -143,7 +151,11 @@ function FireResults({ profile, currentCorpus }: { profile: FireProfile; current
     <div>
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label="FIRE Number (today)" value={fmtCurrency(fireNumberToday)} />
-        <StatCard label="Current Corpus" value={fmtCurrency(currentCorpus)} tone="accent" />
+        <StatCard
+          label="Current Corpus"
+          value={fmtCurrency(currentCorpus)}
+          tone={currentCorpus < 0 ? "danger" : "accent"}
+        />
         <StatCard label="Progress" value={`${progressPercent.toFixed(1)}%`} tone={progressPercent >= 100 ? "success" : "default"} />
         <StatCard
           label={fireAge != null ? "Projected FI Age" : "Years to FI"}
