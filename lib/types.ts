@@ -107,6 +107,16 @@ export const ASSET_TYPES: { value: AssetType; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+/** Equity, ETF, and mutual fund holdings are grouped together as one "Equity & Funds" category in the holdings table. */
+const EQUITY_CATEGORY_TYPES: AssetType[] = ["equity", "etf", "mutual_fund"];
+export function getAssetCategoryKey(type: AssetType): string {
+  return EQUITY_CATEGORY_TYPES.includes(type) ? "equity_funds" : type;
+}
+export function getAssetCategoryLabel(type: AssetType): string {
+  if (EQUITY_CATEGORY_TYPES.includes(type)) return "Equity & Funds";
+  return ASSET_TYPES.find((t) => t.value === type)?.label ?? type;
+}
+
 /** Types tracked as quantity × price. Everything else is a lump-sum value the user updates by hand. */
 const QUANTITY_BASED_TYPES: AssetType[] = ["equity", "etf", "mutual_fund", "bond", "gold"];
 export function isQuantityBasedAsset(type: AssetType): boolean {
