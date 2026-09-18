@@ -11,6 +11,7 @@ import { ConfirmButton } from "@/components/ui/confirm-button";
 import { CategoryForm } from "@/components/forms/category-form";
 import { HouseholdMemberForm } from "@/components/forms/household-member-form";
 import { RecurringRuleForm } from "@/components/forms/recurring-rule-form";
+import { ExportSection } from "@/components/settings/export-section";
 import { CategoryRow } from "./category-row";
 import { deleteHouseholdMember } from "@/lib/actions/household";
 import { setRecurringRuleActive, deleteRecurringRule } from "@/lib/actions/recurring";
@@ -214,6 +215,8 @@ export default function SettingsPage() {
           </div>
         )}
       </section>
+
+      <ExportSection />
     </div>
   );
 }
