@@ -219,6 +219,7 @@ export function HoldingsTable({
                           <div className="text-[11px] text-muted">
                             {typeLabel}
                             {quantityBased && ` · ${Number(holding.quantity).toLocaleString("en-IN")} qty`}
+                            {holding.weight_grams != null && ` · ${Number(holding.weight_grams).toLocaleString("en-IN")}g`}
                             {holding.owner_id && memberById.has(holding.owner_id) && ` · ${memberById.get(holding.owner_id)!.name}`}
                             {holding.source === "zerodha" && " · Zerodha"}
                             {!holding.is_active && " · inactive"}

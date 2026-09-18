@@ -118,9 +118,16 @@ export function getAssetCategoryLabel(type: AssetType): string {
 }
 
 /** Types tracked as quantity × price. Everything else is a lump-sum value the user updates by hand. */
-const QUANTITY_BASED_TYPES: AssetType[] = ["equity", "etf", "mutual_fund", "bond", "gold"];
+const QUANTITY_BASED_TYPES: AssetType[] = ["equity", "etf", "mutual_fund", "bond"];
 export function isQuantityBasedAsset(type: AssetType): boolean {
   return QUANTITY_BASED_TYPES.includes(type);
+}
+
+/** Gold is a lump-sum type (invested amount + current value, like real estate) but
+ *  also accepts an optional weight in grams, purely for reference — it never drives
+ *  the valuation math. */
+export function isWeightTrackedAsset(type: AssetType): boolean {
+  return type === "gold";
 }
 
 /** Interest-bearing lump-sum types where a rate/maturity date are meaningful. */
@@ -148,6 +155,7 @@ export type InvestmentHolding = {
   quantity: number;
   average_buy_price: number;
   current_price: number | null;
+  weight_grams: number | null;
   price_source: "manual" | "zerodha";
   last_price_update: string | null;
   interest_rate: number | null;

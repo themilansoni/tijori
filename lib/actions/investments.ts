@@ -39,6 +39,7 @@ type ParsedHolding = {
   quantity: number;
   average_buy_price: number;
   current_price: number | null;
+  weight_grams: number | null;
   interest_rate: number | null;
   maturity_date: string | null;
   owner_id: string | null;
@@ -53,6 +54,8 @@ function parseHoldingForm(formData: FormData): { error: string } | { data: Parse
   const average_buy_price = Number(formData.get("average_buy_price"));
   const currentPriceRaw = String(formData.get("current_price") ?? "").trim();
   const current_price = currentPriceRaw ? Number(currentPriceRaw) : null;
+  const weightGramsRaw = String(formData.get("weight_grams") ?? "").trim();
+  const weight_grams = weightGramsRaw ? Number(weightGramsRaw) : null;
   const interestRateRaw = String(formData.get("interest_rate") ?? "").trim();
   const interest_rate = interestRateRaw ? Number(interestRateRaw) : null;
   const maturity_date = String(formData.get("maturity_date") ?? "").trim() || null;
@@ -76,6 +79,9 @@ function parseHoldingForm(formData: FormData): { error: string } | { data: Parse
   if (current_price != null && (!Number.isFinite(current_price) || current_price < 0)) {
     return { error: "Current price must be 0 or more." } as const;
   }
+  if (weight_grams != null && (!Number.isFinite(weight_grams) || weight_grams <= 0)) {
+    return { error: "Grams must be greater than 0." } as const;
+  }
   if (interest_rate != null && (!Number.isFinite(interest_rate) || interest_rate < 0)) {
     return { error: "Interest rate must be 0 or more." } as const;
   }
@@ -90,6 +96,7 @@ function parseHoldingForm(formData: FormData): { error: string } | { data: Parse
       quantity,
       average_buy_price,
       current_price,
+      weight_grams,
       interest_rate,
       maturity_date,
       owner_id,

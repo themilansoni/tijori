@@ -15,12 +15,32 @@ import {
   isQuantityBasedAsset,
   isInterestBearingAsset,
   isSimpleAmountAsset,
+  isWeightTrackedAsset,
   type AssetType,
   type HouseholdMember,
   type InvestmentHolding,
 } from "@/lib/types";
 
 const ADD_INVESTOR_SENTINEL = "__add_investor__";
+
+/** Gold used to be tracked as grams × price/gram (quantity-based). Existing holdings
+ *  saved that way have no `weight_grams` and a quantity that isn't 1 — convert those
+ *  to totals so editing them shows the right numbers under the new lump-sum model. */
+function deriveGoldLumpDefaults(holding: InvestmentHolding | undefined): { grams: string; invested: string; current: string } {
+  if (!holding) return { grams: "", invested: "", current: "" };
+  const isLegacyGold = holding.asset_type === "gold" && holding.weight_grams == null && Number(holding.quantity) !== 1;
+  if (isLegacyGold) {
+    const qty = Number(holding.quantity);
+    const invested = qty * Number(holding.average_buy_price);
+    const current = holding.current_price != null ? qty * Number(holding.current_price) : null;
+    return { grams: String(qty), invested: String(invested), current: current != null ? String(current) : "" };
+  }
+  return {
+    grams: holding.weight_grams != null ? String(holding.weight_grams) : "",
+    invested: String(holding.average_buy_price),
+    current: holding.current_price != null ? String(holding.current_price) : "",
+  };
+}
 
 export function ManualHoldingForm({
   holding,
@@ -41,6 +61,10 @@ export function ManualHoldingForm({
   const [isin, setIsin] = useState(holding?.isin ?? "");
   const [currentPrice, setCurrentPrice] = useState(holding?.current_price != null ? String(holding.current_price) : "");
   const [priceFetching, setPriceFetching] = useState(false);
+  const goldDefaults = deriveGoldLumpDefaults(holding);
+  const [weightGrams, setWeightGrams] = useState(goldDefaults.grams);
+  const [lumpInvested, setLumpInvested] = useState(goldDefaults.invested);
+  const [lumpCurrent, setLumpCurrent] = useState(goldDefaults.current);
 
   const [members, setMembers] = useState(initialMembers);
   const [ownerId, setOwnerId] = useState(holding?.owner_id ?? "");
@@ -85,6 +109,7 @@ export function ManualHoldingForm({
   const quantityBased = assetType ? isQuantityBasedAsset(assetType) : false;
   const interestBearing = assetType ? isInterestBearingAsset(assetType) : false;
   const simpleAmount = assetType ? isSimpleAmountAsset(assetType) : false;
+  const weightTracked = assetType ? isWeightTrackedAsset(assetType) : false;
   const nseSearchable = assetType === "equity" || assetType === "etf";
   const mfSearchable = assetType === "mutual_fund";
   const searchable = nseSearchable || mfSearchable;
@@ -173,7 +198,15 @@ export function ManualHoldingForm({
             <Field
               label="Investment name"
               name="instrument_name"
-              placeholder={quantityBased ? "e.g. HDFC Gold ETF" : simpleAmount ? "e.g. Cash at home" : "e.g. SBI FD — 3yr"}
+              placeholder={
+                quantityBased
+                  ? "e.g. HDFC Corp Bond"
+                  : weightTracked
+                  ? "e.g. Gold coins, locker"
+                  : simpleAmount
+                  ? "e.g. Cash at home"
+                  : "e.g. SBI FD — 3yr"
+              }
               value={instrumentName}
               onChange={(e) => setInstrumentName(e.target.value)}
               required
@@ -324,6 +357,18 @@ export function ManualHoldingForm({
           ) : (
             <>
               <input type="hidden" name="quantity" value="1" />
+              {weightTracked && (
+                <Field
+                  label="Grams (optional)"
+                  name="weight_grams"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  placeholder="10"
+                  value={weightGrams}
+                  onChange={(e) => setWeightGrams(e.target.value)}
+                />
+              )}
               <div className="mt-5 grid grid-cols-2 gap-3 [&>label]:!mt-0">
                 <Field
                   label="Invested amount (₹)"
@@ -332,7 +377,8 @@ export function ManualHoldingForm({
                   step="0.01"
                   min="0"
                   placeholder="100000"
-                  defaultValue={holding?.average_buy_price}
+                  value={lumpInvested}
+                  onChange={(e) => setLumpInvested(e.target.value)}
                   required
                 />
                 <Field
@@ -342,12 +388,15 @@ export function ManualHoldingForm({
                   step="0.01"
                   min="0"
                   placeholder="108000"
-                  defaultValue={holding?.current_price ?? ""}
+                  value={lumpCurrent}
+                  onChange={(e) => setLumpCurrent(e.target.value)}
                   required
                 />
               </div>
               <p className="mt-1.5 text-[12px] text-muted">
-                Update the current value yourself whenever you check your passbook, statement, or an estimate.
+                {weightTracked
+                  ? "Enter grams if you're tracking weight, or just leave it blank and fill in the total value."
+                  : "Update the current value yourself whenever you check your passbook, statement, or an estimate."}
               </p>
 
               {interestBearing && (
