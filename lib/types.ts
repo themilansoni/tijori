@@ -16,6 +16,7 @@ export type Transaction = {
   category_id: string;
   account_id: string | null;
   loan_id: string | null;
+  owner_id: string | null;
   amount: number;
   transaction_date: string; // YYYY-MM-DD
   description: string | null;

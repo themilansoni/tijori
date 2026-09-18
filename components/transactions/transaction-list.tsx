@@ -6,7 +6,7 @@ import { TransactionForm } from "@/components/forms/transaction-form";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { deleteTransaction } from "@/lib/actions/transactions";
 import { fmtCurrency } from "@/lib/calculations";
-import type { Account, Category, Loan, Transaction } from "@/lib/types";
+import type { Account, Category, HouseholdMember, Loan, Transaction } from "@/lib/types";
 
 export function TransactionList({
   type,
@@ -14,6 +14,7 @@ export function TransactionList({
   categories,
   accounts,
   loans = [],
+  members = [],
   onChanged,
 }: {
   type: "expense" | "income";
@@ -21,11 +22,13 @@ export function TransactionList({
   categories: Category[];
   accounts: Account[];
   loans?: Loan[];
+  members?: HouseholdMember[];
   onChanged?: () => void;
 }) {
   const categoryById = new Map(categories.map((c) => [c.id, c]));
   const accountById = new Map(accounts.map((a) => [a.id, a]));
   const loanById = new Map(loans.map((l) => [l.id, l]));
+  const memberById = new Map(members.map((m) => [m.id, m]));
   const noun = type === "income" ? "income" : "expenses";
   const amountColor = type === "income" ? "text-success" : "text-foreground";
   const sign = type === "income" ? "+" : "−";
@@ -72,6 +75,11 @@ export function TransactionList({
                       {loanById.get(t.loan_id)!.name}
                     </span>
                   )}
+                  {t.owner_id && memberById.has(t.owner_id) && (
+                    <span className="ml-1.5 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted">
+                      {memberById.get(t.owner_id)!.name}
+                    </span>
+                  )}
                 </td>
                 <td className={`px-4 py-3 text-right font-semibold ${amountColor}`}>
                   {sign}
@@ -79,7 +87,7 @@ export function TransactionList({
                 </td>
                 <td className="px-4 py-3 text-muted">{accountLabel(t)}</td>
                 <td className="px-4 py-3">
-                  <RowActions type={type} transaction={t} categories={categories} accounts={accounts} loans={loans} onChanged={onChanged} />
+                  <RowActions type={type} transaction={t} categories={categories} accounts={accounts} loans={loans} members={members} onChanged={onChanged} />
                 </td>
               </tr>
             ))}
@@ -100,8 +108,13 @@ export function TransactionList({
                 </div>
                 {t.description && <div className="mt-1 text-sm text-muted">{t.description}</div>}
                 {t.loan_id && loanById.has(t.loan_id) && (
-                  <span className="mt-1 inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
+                  <span className="mt-1 mr-1.5 inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
                     {loanById.get(t.loan_id)!.name}
+                  </span>
+                )}
+                {t.owner_id && memberById.has(t.owner_id) && (
+                  <span className="mt-1 inline-block rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted">
+                    {memberById.get(t.owner_id)!.name}
                   </span>
                 )}
               </div>
@@ -111,7 +124,7 @@ export function TransactionList({
               </div>
             </div>
             <div className="mt-3 flex justify-end">
-              <RowActions type={type} transaction={t} categories={categories} accounts={accounts} loans={loans} onChanged={onChanged} />
+              <RowActions type={type} transaction={t} categories={categories} accounts={accounts} loans={loans} members={members} onChanged={onChanged} />
             </div>
           </div>
         ))}
@@ -126,6 +139,7 @@ function RowActions({
   categories,
   accounts,
   loans = [],
+  members = [],
   onChanged,
 }: {
   type: "expense" | "income";
@@ -133,6 +147,7 @@ function RowActions({
   categories: Category[];
   accounts: Account[];
   loans?: Loan[];
+  members?: HouseholdMember[];
   onChanged?: () => void;
 }) {
   return (
@@ -146,6 +161,7 @@ function RowActions({
           categories={categories}
           accounts={accounts}
           loans={loans}
+          members={members}
           transaction={transaction}
           onSuccess={onChanged}
         />

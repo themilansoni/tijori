@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BudgetForm } from "@/components/forms/budget-form";
 import { BudgetRow } from "./budget-row";
 import { budgetStatus, fmtCurrency } from "@/lib/calculations";
-import type { Budget, Category, Transaction } from "@/lib/types";
+import type { Budget, Category, HouseholdMember, Transaction } from "@/lib/types";
 
 export default function BudgetsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -20,15 +20,17 @@ export default function BudgetsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [members, setMembers] = useState<HouseholdMember[]>([]);
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const uid = user.uid;
-    const [catSnap, budgetSnap, txSnap] = await Promise.all([
+    const [catSnap, budgetSnap, txSnap, memberSnap] = await Promise.all([
       getDocs(query(collection(db, "users", uid, "categories"), where("type", "==", "expense"))),
       getDocs(collection(db, "users", uid, "budgets")),
       getDocs(query(collection(db, "users", uid, "transactions"), where("type", "==", "expense"))),
+      getDocs(collection(db, "users", uid, "householdMembers")),
     ]);
 
     const cats = mapDocs<Category>(catSnap).sort((a, b) => a.name.localeCompare(b.name));
@@ -37,6 +39,7 @@ export default function BudgetsPage() {
     setCategories(cats);
     setBudgets(mapDocs<Budget>(budgetSnap).filter((b) => catById.has(b.category_id)));
     setTransactions(mapDocs<Transaction>(txSnap));
+    setMembers(mapDocs<HouseholdMember>(memberSnap).sort((a, b) => a.created_at.localeCompare(b.created_at)));
     setLoading(false);
   }, [user]);
 
@@ -117,10 +120,10 @@ export default function BudgetsPage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {active.map((s) => (
-              <BudgetRow key={s.budget.id} status={s} categories={activeCategories} onChanged={load} />
+              <BudgetRow key={s.budget.id} status={s} categories={activeCategories} transactions={transactions} members={members} onChanged={load} />
             ))}
             {inactive.map((s) => (
-              <BudgetRow key={s.budget.id} status={s} categories={activeCategories} onChanged={load} />
+              <BudgetRow key={s.budget.id} status={s} categories={activeCategories} transactions={transactions} members={members} onChanged={load} />
             ))}
           </div>
         )}

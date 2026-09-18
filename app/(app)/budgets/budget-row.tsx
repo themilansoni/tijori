@@ -4,20 +4,32 @@ import { Modal } from "@/components/ui/modal";
 import { BudgetForm } from "@/components/forms/budget-form";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { setBudgetActive, deleteBudget } from "@/lib/actions/budgets";
-import { fmtCurrency, type BudgetStatus } from "@/lib/calculations";
-import type { Category } from "@/lib/types";
+import { fmtCurrency, spendingByPerson, type BudgetStatus } from "@/lib/calculations";
+import type { Category, HouseholdMember, Transaction } from "@/lib/types";
 
 export function BudgetRow({
   status,
   categories,
+  transactions = [],
+  members = [],
   onChanged,
 }: {
   status: BudgetStatus;
   categories: Category[];
+  transactions?: Transaction[];
+  members?: HouseholdMember[];
   onChanged?: () => void;
 }) {
-  const { budget, category, spent, remaining, usedPercent, isOverBudget, overBy } = status;
+  const { budget, category, spent, remaining, usedPercent, isOverBudget, overBy, periodRange } = status;
   const pct = Math.min(usedPercent, 100);
+
+  const budgetTransactions = transactions.filter(
+    (t) =>
+      t.category_id === budget.category_id &&
+      t.transaction_date >= periodRange.start &&
+      t.transaction_date <= periodRange.end
+  );
+  const personBreakdown = members.length > 0 ? spendingByPerson(budgetTransactions, members) : [];
 
   return (
     <div className={`rounded-xl border p-4 ${isOverBudget ? "border-danger/40" : "border-border"} bg-surface`}>
@@ -49,6 +61,19 @@ export function BudgetRow({
         <span>{usedPercent.toFixed(0)}% used</span>
         {isOverBudget && <span className="font-semibold text-danger">OVER BUDGET</span>}
       </div>
+
+      {personBreakdown.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {personBreakdown.map((p) => (
+            <span
+              key={p.member?.id ?? "unassigned"}
+              className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted"
+            >
+              {p.member?.name ?? "Unassigned"} · {fmtCurrency(p.amount)}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="mt-3 flex items-center gap-3 text-xs">
         <Modal

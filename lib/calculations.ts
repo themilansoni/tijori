@@ -21,6 +21,7 @@ import type {
   Budget,
   BudgetPeriod,
   Category,
+  HouseholdMember,
   InvestmentHolding,
   Loan,
   PeriodKey,
@@ -109,6 +110,32 @@ export function categorySpending(
       percent: total > 0 ? (amount / total) * 100 : 0,
     }))
     .filter((c) => c.category)
+    .sort((a, b) => b.amount - a.amount);
+}
+
+export type PersonSpend = {
+  /** null represents transactions with no owner_id set ("Unassigned"). */
+  member: HouseholdMember | null;
+  amount: number;
+  percent: number;
+};
+
+export function spendingByPerson(transactions: Transaction[], members: HouseholdMember[]): PersonSpend[] {
+  const total = sumAmount(transactions);
+  const byId = new Map(members.map((m) => [m.id, m]));
+  const totals = new Map<string, number>();
+
+  for (const t of transactions) {
+    const key = t.owner_id && byId.has(t.owner_id) ? t.owner_id : "";
+    totals.set(key, (totals.get(key) ?? 0) + Number(t.amount));
+  }
+
+  return Array.from(totals.entries())
+    .map(([ownerId, amount]) => ({
+      member: ownerId ? byId.get(ownerId)! : null,
+      amount,
+      percent: total > 0 ? (amount / total) * 100 : 0,
+    }))
     .sort((a, b) => b.amount - a.amount);
 }
 

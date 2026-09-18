@@ -3,17 +3,20 @@
 import { useState, useTransition } from "react";
 import { createTransaction, updateTransaction } from "@/lib/actions/transactions";
 import { createCategory } from "@/lib/actions/categories";
+import { createHouseholdMember } from "@/lib/actions/household";
 import { Field, SelectField, TextareaField, SubmitButton, FormError } from "@/components/ui/field";
 import { useModal } from "@/components/ui/modal";
-import type { Account, Category, Loan, Transaction } from "@/lib/types";
+import type { Account, Category, HouseholdMember, Loan, Transaction } from "@/lib/types";
 
 const ADD_NEW_SENTINEL = "__add_new__";
+const ADD_PERSON_SENTINEL = "__add_person__";
 
 export function TransactionForm({
   type,
   categories: initialCategories,
   accounts,
   loans = [],
+  members: initialMembers = [],
   transaction,
   defaultDate,
   keepOpenOnAdd,
@@ -23,6 +26,7 @@ export function TransactionForm({
   categories: Category[];
   accounts: Account[];
   loans?: Loan[];
+  members?: HouseholdMember[];
   transaction?: Transaction;
   defaultDate?: string;
   keepOpenOnAdd?: boolean;
@@ -41,6 +45,46 @@ export function TransactionForm({
   const [newCategoryName, setNewCategoryName] = useState("");
   const [categoryError, setCategoryError] = useState<string | undefined>();
   const [categoryPending, startCategoryTransition] = useTransition();
+
+  const [members, setMembers] = useState(initialMembers);
+  const [ownerId, setOwnerId] = useState(transaction?.owner_id ?? "");
+  const [addingMember, setAddingMember] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+  const [memberError, setMemberError] = useState<string | undefined>();
+  const [memberPending, startMemberTransition] = useTransition();
+
+  function handleOwnerChange(value: string) {
+    if (value === ADD_PERSON_SENTINEL) {
+      setAddingMember(true);
+      setMemberError(undefined);
+      return;
+    }
+    setOwnerId(value);
+  }
+
+  function handleAddMember() {
+    const name = newMemberName.trim();
+    if (!name) {
+      setMemberError("Name is required.");
+      return;
+    }
+    setMemberError(undefined);
+
+    const formData = new FormData();
+    formData.set("name", name);
+
+    startMemberTransition(async () => {
+      const result = await createHouseholdMember(formData);
+      if ("error" in result) {
+        setMemberError(result.error);
+        return;
+      }
+      setMembers((prev) => [...prev, result.member]);
+      setOwnerId(result.member.id);
+      setAddingMember(false);
+      setNewMemberName("");
+    });
+  }
 
   function handleCategoryChange(value: string) {
     if (value === ADD_NEW_SENTINEL) {
@@ -95,6 +139,7 @@ export function TransactionForm({
       } else {
         setCategoryId("");
         setLoanId("");
+        setOwnerId("");
         setResetKey((k) => k + 1);
       }
     });
@@ -193,6 +238,54 @@ export function TransactionForm({
             <p className="mt-1.5 text-[12px] text-muted">This amount will come off the loan's outstanding balance.</p>
           )}
         </>
+      )}
+
+      <SelectField label="Person (optional)" name="owner_id" value={ownerId} onChange={(e) => handleOwnerChange(e.target.value)}>
+        <option value="">Unassigned</option>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+        <option value={ADD_PERSON_SENTINEL} style={{ color: "var(--accent)" }}>
+          + Add person
+        </option>
+      </SelectField>
+
+      {addingMember && (
+        <div className="mt-2 rounded-[10px] border border-accent/35 bg-surface-2 p-3">
+          <div className="text-[11.5px] font-medium tracking-[0.2px] text-muted">Add person</div>
+          <input
+            type="text"
+            value={newMemberName}
+            onChange={(e) => setNewMemberName(e.target.value)}
+            placeholder="e.g. Me, or your name"
+            autoFocus
+            className="mt-2 w-full rounded-[9px] border border-border bg-surface px-[13px] py-2.5 text-[14px] text-foreground placeholder:text-muted/60 transition focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(79,70,229,0.16)]"
+          />
+          {memberError && <p className="mt-2 text-[12px] text-danger">{memberError}</p>}
+          <div className="mt-2.5 flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAddingMember(false);
+                setNewMemberName("");
+                setMemberError(undefined);
+              }}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition hover:text-foreground"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={memberPending}
+              onClick={handleAddMember}
+              className="rounded-lg bg-accent px-3 py-1.5 text-xs font-bold text-accent-foreground transition hover:brightness-105 disabled:opacity-60"
+            >
+              {memberPending ? "Adding…" : "Add Person"}
+            </button>
+          </div>
+        </div>
       )}
 
       <Field

@@ -24,6 +24,7 @@ function parseTransactionForm(formData: FormData) {
   const note = String(formData.get("note") ?? "").trim() || null;
   const account_id = String(formData.get("account_id") ?? "").trim() || null;
   const loan_id = String(formData.get("loan_id") ?? "").trim() || null;
+  const owner_id = String(formData.get("owner_id") ?? "").trim() || null;
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return { error: "Amount must be greater than 0." } as const;
@@ -41,6 +42,7 @@ function parseTransactionForm(formData: FormData) {
       note,
       account_id,
       loan_id,
+      owner_id,
     },
   } as const;
 }

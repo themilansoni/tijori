@@ -19,11 +19,12 @@ import {
   sumAmount,
   dailyAverage,
   categorySpending,
+  spendingByPerson,
   spendingByDay,
   spendingByMonth,
   fmtCurrency,
 } from "@/lib/calculations";
-import type { Account, Category, Loan, PeriodKey, Transaction } from "@/lib/types";
+import type { Account, Category, HouseholdMember, Loan, PeriodKey, Transaction } from "@/lib/types";
 
 export default function ExpensesPage() {
   return (
@@ -48,21 +49,24 @@ function ExpensesContent() {
   const [allExpenseTransactions, setAllExpenseTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
+  const [members, setMembers] = useState<HouseholdMember[]>([]);
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const uid = user.uid;
-    const [catSnap, txSnap, accSnap, loanSnap] = await Promise.all([
+    const [catSnap, txSnap, accSnap, loanSnap, memberSnap] = await Promise.all([
       getDocs(query(collection(db, "users", uid, "categories"), where("type", "==", "expense"))),
       getDocs(query(collection(db, "users", uid, "transactions"), where("type", "==", "expense"))),
       getDocs(query(collection(db, "users", uid, "accounts"), where("is_active", "==", true))),
       getDocs(collection(db, "users", uid, "loans")),
+      getDocs(collection(db, "users", uid, "householdMembers")),
     ]);
     setCategories(mapDocs<Category>(catSnap).sort((a, b) => a.name.localeCompare(b.name)));
     setAllExpenseTransactions(mapDocs<Transaction>(txSnap));
     setAccounts(mapDocs<Account>(accSnap).sort((a, b) => a.name.localeCompare(b.name)));
     setLoans(mapDocs<Loan>(loanSnap).sort((a, b) => a.name.localeCompare(b.name)));
+    setMembers(mapDocs<HouseholdMember>(memberSnap).sort((a, b) => a.created_at.localeCompare(b.created_at)));
     setLoading(false);
   }, [user]);
 
@@ -86,6 +90,7 @@ function ExpensesContent() {
   const totalExpenses = sumAmount(periodTransactions);
   const avgDaily = dailyAverage(periodTransactions, start, end);
   const catBreakdown = categorySpending(periodTransactions, categories);
+  const personBreakdown = spendingByPerson(periodTransactions, members);
 
   const chart =
     period === "year"
@@ -131,7 +136,7 @@ function ExpensesContent() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Expenses</h1>
         <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
-          <ExpenseForm categories={activeCategories} accounts={accounts} loans={loans} keepOpenOnAdd onSuccess={load} />
+          <ExpenseForm categories={activeCategories} accounts={accounts} loans={loans} members={members} keepOpenOnAdd onSuccess={load} />
         </Modal>
       </div>
 
@@ -192,6 +197,30 @@ function ExpensesContent() {
         </div>
       )}
 
+      {members.length > 0 && personBreakdown.length > 0 && (
+        <div className="mt-6 rounded-xl border border-border bg-surface p-4">
+          <div className="mb-3 text-sm font-semibold text-muted">Spending by person — {periodLabel}</div>
+          <div className="space-y-2.5">
+            {personBreakdown.map((p) => (
+              <div key={p.member?.id ?? "unassigned"}>
+                <div className="flex items-center justify-between text-sm">
+                  <span>{p.member?.name ?? "Unassigned"}</span>
+                  <span className="text-muted">
+                    {fmtCurrency(p.amount)} · {p.percent.toFixed(0)}%
+                  </span>
+                </div>
+                <div className="mt-1 h-1.5 rounded-full bg-foreground/8">
+                  <div
+                    className="h-full rounded-full bg-accent/50"
+                    style={{ width: `${Math.min(p.percent, 100)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Transactions</h2>
         <FiltersBar
@@ -211,12 +240,12 @@ function ExpensesContent() {
             </p>
             <div className="mt-4">
               <Modal trigger={<Button>+ Add Expense</Button>} title="Add expense">
-                <ExpenseForm categories={activeCategories} accounts={accounts} loans={loans} keepOpenOnAdd onSuccess={load} />
+                <ExpenseForm categories={activeCategories} accounts={accounts} loans={loans} members={members} keepOpenOnAdd onSuccess={load} />
               </Modal>
             </div>
           </div>
         ) : (
-          <ExpenseList transactions={visible} categories={categories} accounts={accounts} loans={loans} onChanged={load} />
+          <ExpenseList transactions={visible} categories={categories} accounts={accounts} loans={loans} members={members} onChanged={load} />
         )}
       </div>
     </div>
