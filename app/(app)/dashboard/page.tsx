@@ -9,40 +9,31 @@ import { db } from "@/lib/firebase/client";
 import { mapDocs } from "@/lib/firebase/collection-helpers";
 import { useAuth } from "@/lib/auth-context";
 import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-selector";
-import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
 import { NetWorthChart } from "@/components/charts/net-worth-chart";
 import { QuickAddFab } from "@/components/dashboard/quick-add-fab";
 import { LiveBadge } from "@/components/ui/live-badge";
+import { LiveClock } from "@/components/ui/live-clock";
 import { recordNetWorthSnapshot } from "@/lib/actions/net-worth";
 import { processRecurringRules } from "@/lib/actions/recurring";
 import { refreshEquityPrices } from "@/lib/actions/prices";
 import {
   getPeriodRange,
   sumAmount,
-  categorySpending,
-  amountByAccount,
   accountBalance,
   isCashAccount,
   totalCreditCardDues,
-  budgetStatus,
-  incomeExpenseByDay,
-  incomeExpenseByMonth,
   calculateTotalPortfolioValue,
-  calculateMarketValue,
-  calculateInvestedAmount,
   calculateLoanTotals,
   fmtCurrency,
 } from "@/lib/calculations";
-import {
-  ACCOUNT_TYPES,
-  type Account,
-  type Budget,
-  type Category,
-  type InvestmentHolding,
-  type Loan,
-  type NetWorthSnapshot,
-  type PeriodKey,
-  type Transaction,
+import type {
+  Account,
+  Category,
+  InvestmentHolding,
+  Loan,
+  NetWorthSnapshot,
+  PeriodKey,
+  Transaction,
 } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -64,7 +55,6 @@ function DashboardContent() {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [activeHoldings, setActiveHoldings] = useState<InvestmentHolding[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [netWorthHistory, setNetWorthHistory] = useState<NetWorthSnapshot[]>([]);
@@ -75,27 +65,23 @@ function DashboardContent() {
     if (!silent) setLoading(true);
     const uid = user.uid;
     await processRecurringRules().catch(() => {});
-    const [txSnap, catSnap, accSnap, budgetSnap, holdingSnap, loanSnap, snapshotSnap] = await Promise.all([
+    const [txSnap, catSnap, accSnap, holdingSnap, loanSnap, snapshotSnap] = await Promise.all([
       getDocs(collection(db, "users", uid, "transactions")),
       getDocs(collection(db, "users", uid, "categories")),
       getDocs(collection(db, "users", uid, "accounts")),
-      getDocs(collection(db, "users", uid, "budgets")),
       getDocs(collection(db, "users", uid, "investmentHoldings")),
       getDocs(collection(db, "users", uid, "loans")),
       getDocs(collection(db, "users", uid, "netWorthSnapshots")),
     ]);
 
-    const cats = mapDocs<Category>(catSnap);
-    const catById = new Map(cats.map((c) => [c.id, c]));
     const txs = mapDocs<Transaction>(txSnap);
     const accs = mapDocs<Account>(accSnap);
     const holdings = mapDocs<InvestmentHolding>(holdingSnap).filter((h) => h.is_active);
     const loansList = mapDocs<Loan>(loanSnap);
 
     setAllTransactions(txs.sort((a, b) => (a.created_at < b.created_at ? 1 : -1)));
-    setCategories(cats);
+    setCategories(mapDocs<Category>(catSnap));
     setAccounts(accs.sort((a, b) => a.name.localeCompare(b.name)));
-    setBudgets(mapDocs<Budget>(budgetSnap).filter((b) => catById.get(b.category_id)?.type === "expense"));
     setActiveHoldings(holdings.sort((a, b) => a.instrument_name.localeCompare(b.instrument_name)));
     setLoans(loansList);
     setNetWorthHistory(mapDocs<NetWorthSnapshot>(snapshotSnap).sort((a, b) => a.month.localeCompare(b.month)));
@@ -140,15 +126,13 @@ function DashboardContent() {
 
   const activeExpenseCategories = categories.filter((c) => c.is_active && c.type === "expense");
   const activeIncomeCategories = categories.filter((c) => c.is_active && c.type === "income");
+  const categoryById = new Map(categories.map((c) => [c.id, c]));
 
   const periodTransactions = allTransactions.filter(
     (t) => t.transaction_date >= start && t.transaction_date <= end
   );
-  const periodIncome = periodTransactions.filter((t) => t.type === "income");
-  const periodExpense = periodTransactions.filter((t) => t.type === "expense");
-
-  const totalIncome = sumAmount(periodIncome);
-  const totalExpense = sumAmount(periodExpense);
+  const totalIncome = sumAmount(periodTransactions.filter((t) => t.type === "income"));
+  const totalExpense = sumAmount(periodTransactions.filter((t) => t.type === "expense"));
   const netCashFlow = totalIncome - totalExpense;
 
   const activeAccounts = accounts.filter((a) => a.is_active);
@@ -156,15 +140,6 @@ function DashboardContent() {
     .filter(isCashAccount)
     .reduce((sum, a) => sum + accountBalance(a, allTransactions), 0);
   const creditCardDues = totalCreditCardDues(activeAccounts, allTransactions);
-
-  const categoryById = new Map(categories.map((c) => [c.id, c]));
-  const activeBudgets = budgets.filter((b) => b.is_active && categoryById.has(b.category_id));
-  const budgetStatuses = activeBudgets.map((b) =>
-    budgetStatus(b, categoryById.get(b.category_id)!, allTransactions, today)
-  );
-  const totalBudget = budgetStatuses.reduce((sum, s) => sum + Number(s.budget.amount), 0);
-  const totalBudgetSpent = budgetStatuses.reduce((sum, s) => sum + s.spent, 0);
-  const budgetRemaining = totalBudget - totalBudgetSpent;
 
   const portfolioTotals = calculateTotalPortfolioValue(activeHoldings);
   const loanOutstanding = calculateLoanTotals(loans).totalOutstanding;
@@ -175,38 +150,14 @@ function DashboardContent() {
     netWorth: s.net_worth,
   }));
 
-  const expenseCatBreakdown = categorySpending(periodExpense, categories);
-  const incomeCatBreakdown = categorySpending(periodIncome, categories);
-  const incomeAccountBreakdown = amountByAccount(periodIncome, accounts);
-
-  const chart =
-    period === "year"
-      ? incomeExpenseByMonth(periodTransactions, start, end)
-      : period === "today"
-      ? []
-      : incomeExpenseByDay(periodTransactions, start, end);
-
-  const recentTransactions = allTransactions.slice(0, 8);
-
-  const periodLabel =
-    period === "today"
-      ? "Today"
-      : period === "week"
-      ? "This Week"
-      : period === "year"
-      ? "This Year"
-      : period === "custom"
-      ? `${start} → ${end}`
-      : "This Month";
-
-  const hour = today.getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const hasLivePrices = activeHoldings.some((h) => ["equity", "etf", "mutual_fund"].includes(h.asset_type) && h.symbol);
+  const recentTransactions = allTransactions.slice(0, 3);
 
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-[13.5px] text-muted">{greeting}</div>
+          <LiveClock />
           <h1 className="mt-0.5 text-[26px] font-semibold tracking-tight">Your financial overview</h1>
         </div>
         <PeriodSelector current={period} />
@@ -227,7 +178,10 @@ function DashboardContent() {
             </div>
           </div>
           <div>
-            <div className="text-[12px] font-medium uppercase tracking-[0.5px] text-muted">Net Worth</div>
+            <div className="flex items-center gap-2.5">
+              <div className="text-[12px] font-medium uppercase tracking-[0.5px] text-muted">Net Worth</div>
+              {hasLivePrices && <LiveBadge updatedAt={lastRefreshedAt} />}
+            </div>
             <div className={`mt-1.5 text-[36px] font-semibold tracking-tight sm:text-[42px] ${netWorth < 0 ? "text-danger" : "text-accent"}`}>
               {fmtCurrency(netWorth)}
             </div>
@@ -263,222 +217,53 @@ function DashboardContent() {
         </section>
       )}
 
-      {/* ---- Accounts ---- */}
-      <section className="mt-6 rounded-xl border border-border bg-surface p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-muted">Accounts</h2>
-          <Link href="/accounts" className="text-xs text-accent">
-            Manage →
+      {/* ---- Quick links ---- */}
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Link href="/accounts" className="rounded-xl border border-border bg-surface p-4 transition hover:border-border-strong">
+          <div className="flex items-center justify-between">
+            <span className="text-[11.5px] font-medium uppercase tracking-wide text-muted">Accounts</span>
+            <span className="text-xs text-accent">Manage →</span>
+          </div>
+          <div className={`mt-2 text-xl font-bold ${totalBalance < 0 ? "text-danger" : ""}`}>{fmtCurrency(totalBalance)}</div>
+          <div className="mt-0.5 text-[11px] text-muted">
+            {activeAccounts.length} account{activeAccounts.length === 1 ? "" : "s"}
+            {creditCardDues > 0 && ` · ${fmtCurrency(creditCardDues)} CC dues`}
+          </div>
+        </Link>
+
+        {activeHoldings.length > 0 && (
+          <Link href="/investments" className="rounded-xl border border-border bg-surface p-4 transition hover:border-border-strong">
+            <div className="flex items-center justify-between">
+              <span className="text-[11.5px] font-medium uppercase tracking-wide text-muted">Investments</span>
+              <span className="text-xs text-accent">Manage →</span>
+            </div>
+            <div className="mt-2 text-xl font-bold text-success">{fmtCurrency(portfolioTotals.currentValue)}</div>
+            <div className="mt-0.5 text-[11px] text-muted">
+              {portfolioTotals.pricedInvested > 0
+                ? `${portfolioTotals.unrealizedPnL >= 0 ? "+" : ""}${portfolioTotals.unrealizedPnLPercent.toFixed(1)}% P&L`
+                : `${activeHoldings.length} holding${activeHoldings.length === 1 ? "" : "s"}`}
+            </div>
           </Link>
-        </div>
-        {activeAccounts.length === 0 ? (
-          <p className="text-sm text-muted">
-            No accounts yet.{" "}
-            <Link href="/accounts" className="text-accent">
-              Add one
-            </Link>{" "}
-            to see your money by account.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {activeAccounts.map((a) => {
-              const bal = accountBalance(a, allTransactions);
-              const typeLabel = ACCOUNT_TYPES.find((t) => t.value === a.type)?.label ?? a.type;
-              return (
-                <div key={a.id} className="flex items-center justify-between text-sm">
-                  <span>
-                    {a.name} <span className="text-muted">· {typeLabel}</span>
-                  </span>
-                  <span className={`font-semibold ${bal < 0 ? "text-danger" : ""}`}>{fmtCurrency(bal)}</span>
-                </div>
-              );
-            })}
-            <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-sm font-semibold">
-              <span>Net Balance</span>
-              <span className={totalBalance < 0 ? "text-danger" : "text-success"}>{fmtCurrency(totalBalance)}</span>
-            </div>
-            {creditCardDues > 0 && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted">Credit Card Dues</span>
-                <span className="text-danger">{fmtCurrency(creditCardDues)}</span>
-              </div>
-            )}
-          </div>
         )}
-      </section>
 
-      {/* ---- Investments ---- */}
-      {activeHoldings.length > 0 && (
-        <section className="mt-6 rounded-xl border border-border bg-surface p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-muted">Investments</h2>
-            <div className="flex items-center gap-3">
-              {activeHoldings.some((h) => ["equity", "etf", "mutual_fund"].includes(h.asset_type) && h.symbol) && (
-                <LiveBadge updatedAt={lastRefreshedAt} />
-              )}
-              <Link href="/investments" className="text-xs text-accent">
-                Manage →
-              </Link>
+        {loanOutstanding > 0 && (
+          <Link href="/loans" className="rounded-xl border border-border bg-surface p-4 transition hover:border-border-strong">
+            <div className="flex items-center justify-between">
+              <span className="text-[11.5px] font-medium uppercase tracking-wide text-muted">Loans</span>
+              <span className="text-xs text-accent">Manage →</span>
             </div>
-          </div>
-          <div className="space-y-2">
-            {activeHoldings.map((h) => {
-              const value = calculateMarketValue(h) ?? calculateInvestedAmount(h);
-              return (
-                <div key={h.id} className="flex items-center justify-between text-sm">
-                  <span>
-                    {h.instrument_name}
-                    {h.current_price == null && <span className="text-muted"> · no price</span>}
-                  </span>
-                  <span className="font-semibold">{fmtCurrency(value)}</span>
-                </div>
-              );
-            })}
-            <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-sm font-semibold">
-              <span>Current Value</span>
-              <span className="text-success">{fmtCurrency(portfolioTotals.currentValue)}</span>
-            </div>
-            {portfolioTotals.pricedInvested > 0 && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted">Unrealized P&amp;L</span>
-                <span className={portfolioTotals.unrealizedPnL < 0 ? "text-danger" : "text-success"}>
-                  {fmtCurrency(portfolioTotals.unrealizedPnL)} ({portfolioTotals.unrealizedPnLPercent >= 0 ? "+" : ""}
-                  {portfolioTotals.unrealizedPnLPercent.toFixed(2)}%)
-                </span>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* ---- Expense + Income overview ---- */}
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <section className="rounded-xl border border-border bg-surface p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-muted">Expense Overview — {periodLabel}</h2>
-            <Link href="/expenses" className="text-xs text-accent">
-              View all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div>
-              <div className="text-lg font-bold">{fmtCurrency(totalExpense)}</div>
-              <div className="text-[11px] text-muted">Spent</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold">{fmtCurrency(totalBudget)}</div>
-              <div className="text-[11px] text-muted">Budget</div>
-            </div>
-            <div>
-              <div className={`text-lg font-bold ${budgetRemaining < 0 ? "text-danger" : ""}`}>
-                {fmtCurrency(budgetRemaining)}
-              </div>
-              <div className="text-[11px] text-muted">Remaining</div>
-            </div>
-          </div>
-          {expenseCatBreakdown.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {expenseCatBreakdown.slice(0, 5).map((c) => (
-                <div key={c.category.id}>
-                  <div className="flex items-center justify-between text-xs">
-                    <span>{c.category.name}</span>
-                    <span className="text-muted">
-                      {fmtCurrency(c.amount)} · {c.percent.toFixed(0)}%
-                    </span>
-                  </div>
-                  <div className="mt-1 h-1 rounded-full bg-foreground/8">
-                    <div className="h-full rounded-full bg-foreground/60" style={{ width: `${Math.min(c.percent, 100)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-xl border border-border bg-surface p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-muted">Income Overview — {periodLabel}</h2>
-            <Link href="/income" className="text-xs text-accent">
-              View all →
-            </Link>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-success">{fmtCurrency(totalIncome)}</div>
-            <div className="text-[11px] text-muted">Total income</div>
-          </div>
-          {incomeCatBreakdown.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {incomeCatBreakdown.slice(0, 4).map((c) => (
-                <div key={c.category.id} className="flex items-center justify-between text-xs">
-                  <span>{c.category.name}</span>
-                  <span className="font-semibold text-success">{fmtCurrency(c.amount)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {incomeAccountBreakdown.length > 0 && (
-            <div className="mt-4 border-t border-border pt-3">
-              <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">By account</div>
-              <div className="space-y-1.5">
-                {incomeAccountBreakdown.map((a) => (
-                  <div key={a.account.id} className="flex items-center justify-between text-xs">
-                    <span>{a.account.name}</span>
-                    <span className="text-muted">{fmtCurrency(a.amount)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
+            <div className="mt-2 text-xl font-bold text-danger">{fmtCurrency(loanOutstanding)}</div>
+            <div className="mt-0.5 text-[11px] text-muted">outstanding</div>
+          </Link>
+        )}
       </div>
-
-      {/* ---- Budget health ---- */}
-      {budgetStatuses.length > 0 && (
-        <section className="mt-6 rounded-xl border border-border bg-surface p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-muted">Budget Health</h2>
-            <Link href="/budgets" className="text-xs text-accent">
-              Manage →
-            </Link>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {budgetStatuses.map((s) => (
-              <div key={s.budget.id}>
-                <div className="flex items-center justify-between text-sm">
-                  <span>{s.category.name}</span>
-                  <span className={s.isOverBudget ? "font-semibold text-danger" : "text-muted"}>
-                    {fmtCurrency(s.spent)} / {fmtCurrency(s.budget.amount)}
-                  </span>
-                </div>
-                <div className="mt-1 h-1.5 rounded-full bg-foreground/8">
-                  <div
-                    className={`h-full rounded-full ${s.isOverBudget ? "bg-danger" : "bg-success"}`}
-                    style={{ width: `${Math.min(s.usedPercent, 100)}%` }}
-                  />
-                </div>
-                <div className={`mt-0.5 text-[11px] ${s.isOverBudget ? "text-danger" : "text-muted"}`}>
-                  {s.isOverBudget ? "OVER BUDGET" : `${s.usedPercent.toFixed(0)}% used`}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ---- Trend ---- */}
-      {chart.length > 0 && (
-        <section className="mt-6 rounded-xl border border-border bg-surface p-4">
-          <h2 className="mb-2 text-sm font-semibold text-muted">Income vs Expense — {periodLabel}</h2>
-          <IncomeExpenseChart data={chart} />
-        </section>
-      )}
 
       {/* ---- Recent transactions ---- */}
       <section className="mt-6 rounded-xl border border-border bg-surface p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted">Recent Transactions</h2>
-          <Link href="/expenses" className="text-xs text-accent">
-            View all →
+          <Link href="/reports" className="text-xs text-accent">
+            Full report →
           </Link>
         </div>
         {recentTransactions.length === 0 ? (
