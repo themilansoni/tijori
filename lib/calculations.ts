@@ -476,6 +476,49 @@ export function projectFire(params: {
   return { points, fireAge, fireYear };
 }
 
+/**
+ * Inverse of projectFire: the minimum monthly investment (rounded up to the nearest ₹100) needed
+ * to reach `targetAge`, holding everything else fixed. Solved by binary search since fireAge is
+ * monotonically non-increasing in monthlyInvestment — no closed form once inflation and an
+ * inflating target are both in the mix. Returns 0 if the target is already met with no further
+ * investment, or null if even a very large monthly investment can't reach it within the horizon.
+ */
+export function requiredMonthlyInvestment(params: {
+  currentAge: number;
+  currentCorpus: number;
+  monthlyExpenses: number;
+  expectedReturnPercent: number;
+  inflationPercent: number;
+  swrPercent: number;
+  targetAge: number;
+}): number | null {
+  const { targetAge, currentAge, ...rest } = params;
+  if (targetAge <= currentAge) return 0;
+  const maxYears = Math.max(60, targetAge - currentAge + 2);
+
+  function fireAgeFor(monthlyInvestment: number): number {
+    return projectFire({ ...rest, currentAge, monthlyInvestment, maxYears }).fireAge ?? Infinity;
+  }
+
+  if (fireAgeFor(0) <= targetAge) return 0;
+
+  let lo = 0;
+  let hi = Math.max(params.monthlyExpenses * 10, 100_000);
+  let guard = 0;
+  while (fireAgeFor(hi) > targetAge && guard < 30) {
+    hi *= 2;
+    guard++;
+  }
+  if (fireAgeFor(hi) > targetAge) return null;
+
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (fireAgeFor(mid) <= targetAge) hi = mid;
+    else lo = mid;
+  }
+  return Math.ceil(hi / 100) * 100;
+}
+
 /** EMIs left to pay, or null when the loan has no fixed tenure to count against. */
 export function calculateLoanPendingEmis(loan: Loan): number | null {
   if (loan.tenure_months == null) return null;
