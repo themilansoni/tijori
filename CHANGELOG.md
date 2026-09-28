@@ -4,6 +4,18 @@ Tracks what changed in each Android APK build. `versionCode`/`versionName` live 
 [`android/app/build.gradle`](android/app/build.gradle) — bump both whenever a new APK is built:
 `versionCode` by 1, `versionName` by semver (patch for fixes, minor for features).
 
+## 2.0.1 (versionCode 7) — 2026-09-28
+
+Fixes a real problem in 2.0.0: Google Play Protect hard-blocked that build on install because it
+requested READ_SMS (for the SMS auto-capture feature) from a sideloaded, unknown-developer app —
+one of Play Protect's strongest malware signals, with no legitimate way around it outside the
+Play Store. Removed that permission and the native SMS-reading engine entirely.
+
+Replaced with a **"Paste SMS" button** on Expenses: copy the bank/UPI SMS text, paste it in, and
+it parses the amount/type/merchant the same way the old auto-capture did — just manually
+triggered instead of automatic, and requesting zero special permissions. Everything else from
+2.0.0 (Loans, Reports, PIN lock, interactive FIRE, simplified Dashboard, etc.) is unchanged.
+
 ## 2.0.0 (versionCode 6) — 2026-09-28
 
 Biggest release yet — several new modules and a big FIRE/Dashboard overhaul, built up over
