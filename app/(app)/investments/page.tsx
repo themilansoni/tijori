@@ -9,6 +9,7 @@ import { refreshEquityPrices } from "@/lib/actions/prices";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
+import { LiveBadge } from "@/components/ui/live-badge";
 import { ManualHoldingForm } from "@/components/forms/manual-holding-form";
 import { HoldingsTable } from "./holdings-table";
 import { AllocationBreakdown } from "./allocation-breakdown";
@@ -25,11 +26,12 @@ export default function InvestmentsPage() {
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [refreshing, startRefresh] = useTransition();
   const [refreshMessage, setRefreshMessage] = useState<string | undefined>();
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [ownerFilter, setOwnerFilter] = useState<string | null>(null); // null = everyone
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     const uid = user.uid;
     const [holdingSnap, accSnap, memberSnap] = await Promise.all([
       getDocs(collection(db, "users", uid, "investmentHoldings")),
@@ -50,22 +52,41 @@ export default function InvestmentsPage() {
     load();
   }, [load]);
 
-  function handleRefreshPrices() {
-    setRefreshMessage(undefined);
+  function handleRefreshPrices(silent = false) {
+    if (!silent) setRefreshMessage(undefined);
     startRefresh(async () => {
       const result = await refreshEquityPrices();
       if ("error" in result) {
-        setRefreshMessage(result.error);
+        if (!silent) setRefreshMessage(result.error);
         return;
       }
-      setRefreshMessage(
-        result.skipped.length > 0
-          ? `Updated ${result.updated.length} — couldn't find a price for ${result.skipped.join(", ")}.`
-          : `Updated ${result.updated.length} price${result.updated.length === 1 ? "" : "s"}.`
-      );
-      await load();
+      setLastRefreshedAt(new Date());
+      if (!silent) {
+        setRefreshMessage(
+          result.skipped.length > 0
+            ? `Updated ${result.updated.length} — couldn't find a price for ${result.skipped.join(", ")}.`
+            : `Updated ${result.updated.length} price${result.updated.length === 1 ? "" : "s"}.`
+        );
+      }
+      await load(silent);
     });
   }
+
+  // Keep prices live in the background — silently, without disturbing whatever the "Refresh
+  // prices" message currently says — as long as at least one holding is actually refreshable and
+  // the tab is in the foreground.
+  useEffect(() => {
+    const hasRefreshable = holdings.some(
+      (h) => h.is_active && ["equity", "etf", "mutual_fund"].includes(h.asset_type) && h.symbol
+    );
+    if (!hasRefreshable) return;
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      handleRefreshPrices(true);
+    }, 3 * 60 * 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holdings]);
 
   if (authLoading || loading) return null;
 
@@ -87,8 +108,9 @@ export default function InvestmentsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Investments</h1>
         <div className="flex items-center gap-2.5">
+          {hasRefreshableHoldings && <LiveBadge updatedAt={lastRefreshedAt} />}
           {hasRefreshableHoldings && (
-            <Button variant="ghost" onClick={handleRefreshPrices} disabled={refreshing}>
+            <Button variant="ghost" onClick={() => handleRefreshPrices()} disabled={refreshing}>
               {refreshing ? "Refreshing…" : "Refresh prices"}
             </Button>
           )}

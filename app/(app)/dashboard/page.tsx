@@ -12,8 +12,10 @@ import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-select
 import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
 import { NetWorthChart } from "@/components/charts/net-worth-chart";
 import { QuickAddFab } from "@/components/dashboard/quick-add-fab";
+import { LiveBadge } from "@/components/ui/live-badge";
 import { recordNetWorthSnapshot } from "@/lib/actions/net-worth";
 import { processRecurringRules } from "@/lib/actions/recurring";
+import { refreshEquityPrices } from "@/lib/actions/prices";
 import {
   getPeriodRange,
   sumAmount,
@@ -66,10 +68,11 @@ function DashboardContent() {
   const [activeHoldings, setActiveHoldings] = useState<InvestmentHolding[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [netWorthHistory, setNetWorthHistory] = useState<NetWorthSnapshot[]>([]);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     const uid = user.uid;
     await processRecurringRules().catch(() => {});
     const [txSnap, catSnap, accSnap, budgetSnap, holdingSnap, loanSnap, snapshotSnap] = await Promise.all([
@@ -107,6 +110,25 @@ function DashboardContent() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Keep displayed prices live in the background while the dashboard is open and in the foreground.
+  useEffect(() => {
+    const hasRefreshable = activeHoldings.some(
+      (h) => ["equity", "etf", "mutual_fund"].includes(h.asset_type) && h.symbol
+    );
+    if (!hasRefreshable) return;
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      refreshEquityPrices().then((result) => {
+        if (!("error" in result)) {
+          setLastRefreshedAt(new Date());
+          load(true);
+        }
+      });
+    }, 3 * 60 * 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeHoldings]);
 
   if (authLoading || loading) return null;
 
@@ -290,9 +312,14 @@ function DashboardContent() {
         <section className="mt-6 rounded-xl border border-border bg-surface p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-muted">Investments</h2>
-            <Link href="/investments" className="text-xs text-accent">
-              Manage →
-            </Link>
+            <div className="flex items-center gap-3">
+              {activeHoldings.some((h) => ["equity", "etf", "mutual_fund"].includes(h.asset_type) && h.symbol) && (
+                <LiveBadge updatedAt={lastRefreshedAt} />
+              )}
+              <Link href="/investments" className="text-xs text-accent">
+                Manage →
+              </Link>
+            </div>
           </div>
           <div className="space-y-2">
             {activeHoldings.map((h) => {
