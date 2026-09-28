@@ -13,7 +13,6 @@ import { HouseholdMemberForm } from "@/components/forms/household-member-form";
 import { RecurringRuleForm } from "@/components/forms/recurring-rule-form";
 import { ExportSection } from "@/components/settings/export-section";
 import { AppLockSection } from "@/components/settings/app-lock-section";
-import { SmsCaptureSection } from "@/components/settings/sms-capture-section";
 import { CategoryRow } from "./category-row";
 import { deleteHouseholdMember } from "@/lib/actions/household";
 import { setRecurringRuleActive, deleteRecurringRule } from "@/lib/actions/recurring";
@@ -218,10 +217,6 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <SmsCaptureSection
-        expenseCategories={expenseCategories.filter((c) => c.is_active)}
-        incomeCategories={incomeCategories.filter((c) => c.is_active)}
-      />
       <AppLockSection />
       <ExportSection />
     </div>

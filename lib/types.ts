@@ -219,18 +219,6 @@ export type RecurringRule = {
   updated_at: string;
 };
 
-/** Settings for the Android-only SMS auto-capture feature (Settings > SMS Auto-Capture). Off by
- *  default — the user opts in and grants the READ_SMS permission on-device. */
-export type SmsCaptureConfig = {
-  enabled: boolean;
-  expense_category_id: string | null;
-  income_category_id: string | null;
-  /** Epoch ms of the native SMS `date` column for the newest message already processed — every
-   *  poll only looks at messages strictly after this, so nothing gets logged twice. */
-  last_processed_date: number;
-  updated_at: string;
-};
-
 export type HouseholdMember = {
   id: string;
   user_id: string;

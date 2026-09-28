@@ -13,6 +13,7 @@ import { PeriodSelector, CustomRangePicker } from "@/components/ui/period-select
 import { SpendBarChart } from "@/components/charts/spend-bar-chart";
 import { ExpenseForm } from "@/components/forms/expense-form";
 import { CsvImportForm } from "@/components/forms/csv-import-form";
+import { SmsPasteForm } from "@/components/forms/sms-paste-form";
 import { processRecurringRules } from "@/lib/actions/recurring";
 import { FiltersBar, type SortKey } from "./filters-bar";
 import { ExpenseList } from "./expense-list";
@@ -142,6 +143,13 @@ function ExpensesContent() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Expenses</h1>
         <div className="flex items-center gap-2.5">
+          <Modal trigger={<Button variant="ghost">Paste SMS</Button>} title="Add from SMS">
+            <SmsPasteForm
+              expenseCategories={activeCategories}
+              incomeCategories={incomeCategories.filter((c) => c.is_active)}
+              onSuccess={load}
+            />
+          </Modal>
           <Modal trigger={<Button variant="ghost">Import CSV</Button>} title="Import from CSV">
             <CsvImportForm
               expenseCategories={activeCategories}
