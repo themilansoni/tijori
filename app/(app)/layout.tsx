@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import { TijoriLogo } from "@/components/ui/tijori-logo";
 import { MadeBy } from "@/components/ui/made-by";
 import { AppLockGate } from "@/components/app-lock/app-lock-gate";
+import { SmsCaptureEngine } from "@/components/sms-capture/sms-capture-engine";
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { MobileNav } from "@/components/nav/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -43,6 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <AppLockGate>
+      <SmsCaptureEngine />
       <div className="flex min-h-screen flex-col bg-background text-foreground lg:flex-row">
         <aside className="hidden w-64 shrink-0 flex-col bg-nav-bg px-4 py-6 text-nav-foreground lg:sticky lg:top-0 lg:flex lg:h-screen lg:border-r lg:border-nav-border">
           <div className="px-2">

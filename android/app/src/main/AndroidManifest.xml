@@ -32,4 +32,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Used only for the optional SMS auto-capture feature (Settings > SMS Auto-Capture) —
+         reads the on-device SMS inbox to auto-log bank/UPI debit/credit alerts as transactions.
+         Requested at runtime, off by default. -->
+    <uses-permission android:name="android.permission.READ_SMS" />
 </manifest>
