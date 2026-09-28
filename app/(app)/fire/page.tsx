@@ -298,6 +298,13 @@ function FireResults({ scenario, currentCorpus }: { scenario: Scenario; currentC
 
   const yearsToFire = fireAge != null ? fireAge - scenario.currentAge : null;
 
+  // Zoom the chart to the years that actually matter — a few past FI (or past your target age,
+  // whichever is later) — instead of always running the full 60-year horizon, which buries the
+  // crossover point in the first sliver of the chart under a long tail of compounding.
+  const chartHorizonAge =
+    fireAge != null ? Math.max(fireAge, scenario.retirementAge) + 5 : scenario.currentAge + 60;
+  const chartPoints = points.filter((p) => p.age <= chartHorizonAge);
+
   const vsTarget =
     fireAge == null
       ? { text: `Won't reach FI within the projection horizon — target age ${scenario.retirementAge} is out of reach at this rate.`, tone: "danger" as const }
@@ -340,8 +347,15 @@ function FireResults({ scenario, currentCorpus }: { scenario: Scenario; currentC
       </div>
 
       <div className="mt-6 rounded-xl border border-border bg-surface p-4">
-        <div className="mb-2 text-sm font-semibold text-muted">Corpus vs. FIRE target</div>
-        <FireChart data={points} />
+        <div className="text-sm font-semibold text-muted">Corpus vs. FIRE target</div>
+        <p className="mt-1 text-[12.5px] text-muted">
+          Green is your savings growing over time; the dashed purple line is how much you'd need
+          to retire at that age (it rises with inflation). Where green crosses above purple is
+          when you're financially independent.
+        </p>
+        <div className="mt-3">
+          <FireChart data={chartPoints} fireAge={fireAge} />
+        </div>
       </div>
     </div>
   );

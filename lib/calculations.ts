@@ -303,6 +303,16 @@ export function fmtCurrency(n: number): string {
   return `${sign}₹${Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 }
 
+/** Short Lakh/Crore form for tight spaces (chart axes) — full ₹1,20,00,000 becomes ₹1.2Cr. */
+export function fmtCurrencyCompact(n: number): string {
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  if (abs >= 1_00_00_000) return `${sign}₹${(abs / 1_00_00_000).toFixed(abs >= 10_00_00_000 ? 0 : 1)}Cr`;
+  if (abs >= 1_00_000) return `${sign}₹${(abs / 1_00_000).toFixed(abs >= 10_00_000 ? 0 : 1)}L`;
+  if (abs >= 1_000) return `${sign}₹${(abs / 1_000).toFixed(0)}k`;
+  return `${sign}₹${abs.toFixed(0)}`;
+}
+
 /**
  * Centralized investment-portfolio math — every screen (list, dashboard,
  * detail) reads through these instead of computing invested/market value
