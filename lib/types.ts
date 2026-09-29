@@ -244,6 +244,17 @@ export type InvestmentTransaction = {
   updated_at: string;
 };
 
+/** Singleton doc controlling automatic transaction capture from Android notification content
+ *  (bank/UPI apps, SMS) via NotificationListenerService. `last_processed_at` is an epoch-ms
+ *  watermark — only captured notifications newer than it are considered on the next poll. */
+export type NotificationCaptureConfig = {
+  enabled: boolean;
+  expense_category_id: string;
+  income_category_id: string;
+  last_processed_at: number;
+  updated_at: string;
+};
+
 export type FireProfile = {
   current_age: number;
   retirement_age: number;

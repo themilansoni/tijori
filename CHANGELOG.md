@@ -4,6 +4,25 @@ Tracks what changed in each Android APK build. `versionCode`/`versionName` live 
 [`android/app/build.gradle`](android/app/build.gradle) — bump both whenever a new APK is built:
 `versionCode` by 1, `versionName` by semver (patch for fixes, minor for features).
 
+## 2.0.2 (versionCode 8) — 2026-09-29
+
+**New: Automatic capture, take two — via notification access instead of SMS reading.**
+2.0.1 replaced automatic SMS capture with manual paste because READ_SMS got the app hard-blocked
+by Google Play Protect. This build adds a second, different attempt at automatic: an Android
+`NotificationListenerService` that reads bank/UPI payment notifications (GPay, PhonePe, your bank
+app, SMS) and auto-logs matches as transactions.
+
+The key difference from the reverted approach: this needs **no install-time permission at all** —
+no new `<uses-permission>` entry in the manifest. Access is granted from a dedicated system
+settings screen (Settings → Notification access) that the app links to, and can be revoked there
+any time. Turn it on from Settings → Automatic capture: grant notification access, pick a default
+expense and income category, then flip it on.
+
+Worth saying plainly: this is untested on a real device and there's no guarantee it avoids Play
+Protect scrutiny either — broad notification access is also a sensitive capability. If this build
+also gets blocked or flagged, "Paste SMS" on Expenses (shipped in 2.0.1) remains the fallback and
+isn't going anywhere.
+
 ## 2.0.1 (versionCode 7) — 2026-09-28
 
 Fixes a real problem in 2.0.0: Google Play Protect hard-blocked that build on install because it
