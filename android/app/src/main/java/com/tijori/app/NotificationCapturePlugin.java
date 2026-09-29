@@ -11,7 +11,6 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 
 @CapacitorPlugin(name = "NotificationCapture")
 public class NotificationCapturePlugin extends Plugin {
@@ -41,12 +40,7 @@ public class NotificationCapturePlugin extends Plugin {
 
         JSONArray items = NotificationCaptureStore.getSince(getContext(), since);
         JSObject ret = new JSObject();
-        try {
-            ret.put("items", items);
-        } catch (JSONException e) {
-            call.reject("Failed to read captured notifications", e);
-            return;
-        }
+        ret.put("items", items);
         call.resolve(ret);
     }
 
